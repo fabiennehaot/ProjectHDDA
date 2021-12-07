@@ -7,17 +7,7 @@ output:
     keep_md: true
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-library(gridExtra)
-library(HDDAData)
-library(glmnet)
-library(MASS)
-library(locfdr)
-library(boot)
-library(pROC)
-```
+
 
 # Research Question
 
@@ -26,7 +16,8 @@ library(pROC)
 # Technical Report
 
 ## Data
-```{r getdata}
+
+```r
 data("Einecke2010Kidney")
 X_raw <- Einecke2010Kidney[, -1]
 Y <- factor(Einecke2010Kidney[, 1], levels = c(0,1),labels = c('accept','reject'))
@@ -35,7 +26,8 @@ Y <- factor(Einecke2010Kidney[, 1], levels = c(0,1),labels = c('accept','reject'
 ## Exploration of the Data
 
 ## Hypothesis Testing 
-```{r hyptest_unadjusted}
+
+```r
 gene_data <- as.matrix(X_raw)
 group <- Y
 # non adjusted p-values as named vector
@@ -60,15 +52,21 @@ ggplot(data=as.data.frame(t_stats)) +
   labs(title = "t-statistics", x= "gene",y= "unadjusted t-statistic",
        caption= "There are more observations in the lower tail") +
   theme_bw()
+```
+
+![](Report-project_files/figure-html/hyptest_unadjusted-1.png)<!-- -->
+
+```r
 table_p_nonadj <- table(t_stats$p_val < 0.05)
 no_corr_genes <- t_stats %>% 
   filter(p_val<.05) %>%
   .$gene
 ```
 
-There are `r as.numeric(table_p_nonadj['TRUE'])` out of 10.000 genes with p-value of 0.05.
+There are 2883 out of 10.000 genes with p-value of 0.05.
 
-```{r hyptest_fdr_hist}
+
+```r
 #fdr analysis - current behaviour of p-values: uniform?
 t_stats %>%
   ggplot(aes(x = p_val)) +
@@ -77,12 +75,15 @@ t_stats %>%
   theme_bw()
 ```
 
+![](Report-project_files/figure-html/hyptest_fdr_hist-1.png)<!-- -->
+
 This histogram shows a distribution which is close to a uniform distribution
 For the larger p-values, but with more small p-values than expected under 
 a uniform distribution. The higher number of genes with small p-values indicates that some genes show a different behaviour regarding kidney rejection
 
 
-```{r hyptest_fdr_padj}
+
+```r
 # adjusted p values
 fdr_level <- .1
 t_stats <- t_stats %>%
@@ -103,22 +104,32 @@ pp_adj <- t_stats %>%
 grid.arrange(pp_adj,
              pp_adj + ylim(c(0,fdr_level)),
              ncol=2)
+```
 
+```
+## Warning: Removed 7773 rows containing missing values (geom_point).
+```
+
+![](Report-project_files/figure-html/hyptest_fdr_padj-1.png)<!-- -->
+
+```r
 # these are the genes
 table_p_adj <- table(t_stats$p_adj < fdr_level)
 fdr_genes <- t_stats %>%
   filter(p_adj < fdr_level)%>%
   .$gene
-
 ```
 
 After selection still high dimensional. The genes tell us something about the rejection status through the t-tests.
 
-```{r localfdr}
+
+```r
 #local fdr
 
 fdr_x <- locfdr(t_stats$z_val,plot=3) 
 ```
+
+![](Report-project_files/figure-html/localfdr-1.png)<!-- -->
  The probability $Pr[fdr(Z) < \alpha]$ is the probability that a non-null 
  can be detected when the nominal local fdr is set at $\alpha$
  $\alpha$ = O.1 corresponds with proportion 60%.
@@ -129,7 +140,8 @@ fdr_x <- locfdr(t_stats$z_val,plot=3)
  $\sigma = 1.621$: standard deviation becomes larger than 1
 The fact that the blue and green line differ on the left side show the signal genes for kidney rejection. We don't expect to find signal genes with high t-values.
 
-```{r lfdr_meanfdr}
+
+```r
 lfdr_level <- fdr_x$Efdr[1]
 t_stats <- t_stats %>%
   mutate(
@@ -139,6 +151,13 @@ t_stats <- t_stats %>%
 t_stats %>%
   filter(lfdr < lfdr_level) %>%
   summarize(nr_of_genes=n(), mean_fdr=mean(lfdr))
+```
+
+```
+## # A tibble: 1 × 2
+##   nr_of_genes mean_fdr
+##         <int>    <dbl>
+## 1         358   0.0372
 ```
 
 ## Model Selection
