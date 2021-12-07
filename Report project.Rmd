@@ -1,0 +1,36 @@
+---
+title: "HDDA Project"
+author: "L. Barbier, K. De Witte, F. Haot, K. Putseys"
+date: "12/7/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Research Question
+
+# Executive Summary
+
+# Technical Report
+
+## Data
+```{r cars}
+summary(cars)
+```
+
+## Exploration of the Data
+
+## Hypothesis Testing 
+
+## Model Selection
+
+## Model Evalutaion
+
+## Conclusions
+
+
+## Including Plots
+
