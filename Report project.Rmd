@@ -79,7 +79,6 @@ This histogram shows a distribution which is close to a uniform distribution
 For the larger p-values, but with more small p-values than expected under 
 a uniform distribution. The higher number of genes with small p-values indicates that some genes show a different behaviour regarding kidney rejection
 
-Too many genes with p-value 1, but there is a signal - uniform split visible
 
 ```{r hyptest_fdr_padj}
 # adjusted p values
