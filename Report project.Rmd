@@ -1,7 +1,7 @@
 ---
 title: "HDDA Project"
-author: "L. Barbier, K. De Witte, F. Haot, K. Putseys"
-date: "12/7/2021"
+author: "Lisa Barbier, Klara Dewitte, Fabienne Haot, Kasimir Putseys"
+date: "December 2021"
 output: html_document
 ---
 
