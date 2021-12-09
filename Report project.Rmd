@@ -140,6 +140,10 @@ t_stats %>%
 ```
 
 ## Model Selection
+In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a train (70%) and test (30%) dataset.
+
+Hier ook nog de testset deftig scalen? maar hoe?
+
 ```{r training and test data}
 set.seed(1234)
 trainset <- sample(nrow(X_raw), 0.7*nrow(X_raw))
@@ -155,21 +159,22 @@ testY <- Y[-trainset]
 train_data <- data.frame(trainY, trainX)
 test_data <- data.frame(testY, testX)
 ```
+Here, we will evaluate three prediction models: principal component regression (PCR), Ridge regression and Lasso regression.
 
-```{r PCA}
+# Principal compentent regression (PCR)
+
+```{r PCR}
 # Calculate PCA and extract scores
 pca_X <- prcomp(trainX)
 Z <- pca_X$x
-head(Z)
 
 ## Total number of available PCs
 n_PC <- ncol(Z)
 n_PC
 ```
-We first start with doing the PCA, where we can see we have 175 principal components that can be used. 
+First, the principal components are calculated and the total number of available PC's is selected. In our case, 175 PC's are available.
 
-
-```{r PCR, cache=TRUE}
+```{r full PCR, cache=TRUE}
 fit_data <- data.frame(trainY, Z)
 head(fit_data)
 
@@ -184,7 +189,11 @@ full_model_cv <- cv.glm(
 
 ## We'll just use the raw one here
 full_model_cv$delta[1] # This is the AUC for this particular model estimated by AUC
+```
 
+First we try to fit a model with all the PCs. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of 0.65. 
+
+```{r each PC, cache=TRUE}
 ## Now we'll wrap this code in a for-loop and repeat for each number of PCs
 cv_auc <- vector("numeric", length = n_PC)
 set.seed(1234) # seed for reproducibility
@@ -213,11 +222,12 @@ optim_nPC
 plot(names(cv_auc), cv_auc, xlab = "n PCs", ylab = "AUC", type = "l")
 abline(v = optim_nPC, col = "red")
 ```
-With the full model, we get the warning message: Algorithm did not converge. This means there is a perfect
-separation and we will need penalized regression.
-The full model has an area under the curve (AUC) of 0.62.
 
-The plot shows the number of optimal PC's is 16.
+In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of 15, which corresponds to an AUC of  0.8221924.
+
+# Ridge regression
+
+# Lasso regression
 
 ## Model Evalutaion
 
