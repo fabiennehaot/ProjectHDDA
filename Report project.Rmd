@@ -140,6 +140,84 @@ t_stats %>%
 ```
 
 ## Model Selection
+```{r training and test data}
+set.seed(1234)
+trainset <- sample(nrow(X_raw), 0.7*nrow(X_raw))
+trainX <- X_raw[trainset, ]
+trainX <- scale(trainX, center = TRUE, scale = TRUE)
+dim(trainX) #175*10000
+trainY <- Y[trainset]
+
+testX <- X_raw[-trainset, ]
+dim(testX) #75*10000
+testY <- Y[-trainset]
+
+train_data <- data.frame(trainY, trainX)
+test_data <- data.frame(testY, testX)
+```
+
+```{r PCA}
+# Calculate PCA and extract scores
+pca_X <- prcomp(trainX)
+Z <- pca_X$x
+head(Z)
+
+## Total number of available PCs
+n_PC <- ncol(Z)
+n_PC
+```
+We first start with doing the PCA, where we can see we have 175 principal components that can be used. 
+
+
+```{r PCR, cache=TRUE}
+fit_data <- data.frame(trainY, Z)
+head(fit_data)
+
+## Example of PC Log. Reg. with all PCs
+full_model <- glm(trainY ~ ., data = fit_data, family = "binomial")
+
+
+full_model_cv <- cv.glm(
+  data = fit_data,  glmfit = full_model,
+  cost = auc, K = 10  # note: specify the auc function (from pROC) without`()`!
+)
+
+## We'll just use the raw one here
+full_model_cv$delta[1] # This is the AUC for this particular model estimated by AUC
+
+## Now we'll wrap this code in a for-loop and repeat for each number of PCs
+cv_auc <- vector("numeric", length = n_PC)
+set.seed(1234) # seed for reproducibility
+for (i in seq_len(n_PC)) {
+  ## Prepare fit_data; subset number of PCs to i
+  fit_data <- data.frame(trainY, Z[, 1:i, drop = FALSE])  # use drop = FALSE to avoid problems when subsetting single column
+  pcr_mod <- suppressWarnings(
+    glm(trainY ~ ., data = fit_data, family = "binomial")
+  )
+  
+  ## Do 4-fold CV while suppressing Warnings and Messages
+  cv <- suppressWarnings(
+    suppressMessages(
+      cv.glm(fit_data, pcr_mod, cost = pROC::auc, K = 4)
+    )
+  )
+  cv_auc[i] <- cv$delta[1]
+}
+names(cv_auc) <- seq_along(cv_auc)
+cv_auc
+
+## Finding the optimal nr. of PCs corresponds to finding the max. AUC
+optim_nPC <- names(which.max(cv_auc))
+optim_nPC
+
+plot(names(cv_auc), cv_auc, xlab = "n PCs", ylab = "AUC", type = "l")
+abline(v = optim_nPC, col = "red")
+```
+With the full model, we get the warning message: Algorithm did not converge. This means there is a perfect
+separation and we will need penalized regression.
+The full model has an area under the curve (AUC) of 0.62.
+
+The plot shows the number of optimal PC's is 16.
 
 ## Model Evalutaion
 
