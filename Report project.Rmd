@@ -355,7 +355,7 @@ In a second step, we loop and repeat this for each PC. This gives us the optimal
 ```{r PCR, cache=TRUE}
 pca <- prcomp(trainX)
 Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
-Zk <- pca$x[, 1:l]
+Zk <- pca$x[, 1:optim_PC]
 
 pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 summary(pcr_model1)
