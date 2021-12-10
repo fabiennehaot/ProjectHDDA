@@ -361,7 +361,7 @@ pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 summary(pcr_model1)
 suppressMessages(plot(pcr_model1, plottype = "validation"))
 ```
-In the last step, a principle component egression model with `r optim_nPC` is fitted. 
+In the last step, a principle component egression model with `r optim_nPC` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
 
 # Ridge regression
 
