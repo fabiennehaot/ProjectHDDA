@@ -437,7 +437,7 @@ n_PC
 ```
 First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PC's are available.
 
-```{r full PCR, cache=TRUE}
+```{r full PCR, cache=TRUE, warning=FALSE}
 fit_data <- data.frame(trainY, Z)
 
 ## Example of PC Log. Reg. with all PCs
@@ -454,7 +454,7 @@ full_model_cv$delta[1] # This is the AUC for this particular model estimated by 
 ```
 First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into (hoeveel we er kiezen) approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
 
-```{r each PC, cache=TRUE}
+```{r each PC, cache=TRUE, warning=FALSE}
 ## Now we'll wrap this code in a for-loop and repeat for each number of PCs
 cv_auc <- vector("numeric", length = n_PC)
 set.seed(1234) # seed for reproducibility
@@ -487,7 +487,7 @@ abline(v = optim_nPC, col = "red")
 
 In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of `r optim_nPC`, which corresponds to an AUC of `cv_auc[optim_nPC]`.
 
-```{r PCR, cache=TRUE}
+```{r PCR 2, cache=TRUE, warning=FALSE}
 pca <- prcomp(trainX)
 Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
 Zk <- pca$x[, 1:optim_PC]
