@@ -30,20 +30,14 @@ Data description in [@einecke:2010]
 ```{r getdata}
 data("Einecke2010Kidney")
 X_raw <- Einecke2010Kidney[, -1]
-<<<<<<< HEAD
 Y <- factor(Einecke2010Kidney[, 1], 
             levels = c(0,1),labels = c('accept','reject'))
-=======
-Y <- factor(Einecke2010Kidney[, 1], levels = c(0, 1),labels = c('accept', 'reject'))
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
 ```
 
 ## Exploration of the Data
 
 ## Hypothesis Testing 
-
-
-Not every gene in the data set is an indicator for kidney rejection. In this section we find out which genes are differentially expressed between the two kidney rejection groups. Since we do not know a priori whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances. 
+Not every gene in the data set is an indicator for kidney rejection. In this section we find out which genes behave differently between the two kidney rejection groups. Since we do not know a priori whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances. 
 
 \[H_0: \mu_{normal}(gene) = \mu_{reject}(gene) \]
 \[H_1: \mu_{normal}(gene) \neq \mu_{reject}(gene) \]
@@ -53,8 +47,7 @@ We first perform these t-tests for every gene in the data, with an individual si
 ```{r hyptest_unadjusted, fig.height= 4}
 gene_data <- as.matrix(X_raw)
 group <- Y
-# non adjusted p-values as named vector
-significance_level <- 0.05
+# non adjusted p-values 
 ttest_results <- apply(gene_data, 2, function(x) {
   t_test <- t.test(x ~ group)
   p_val <- t_test$p.value
@@ -63,101 +56,114 @@ ttest_results <- apply(gene_data, 2, function(x) {
   z_val <- case_when(stat < 0 ~ qnorm(p_val/2), TRUE~ qnorm(1-p_val/2))
   tibble(stat = stat, p_val = p_val,z_val = z_val, df = df)})
 t_stats <- bind_rows(ttest_results) %>%
-  mutate(gene = colnames(X_raw),
-         isdetected_t = factor(p_val < significance_level,
-                         levels=c(TRUE, FALSE),
-                         labels = c('detected','H0 not rejected')))
+  mutate(gene = colnames(X_raw))
+
+# selection
+nonadj_level <- 0.05
+selected_nonadj <- t_stats %>% filter(p_val< nonadj_level)
 
 # plot histogram for the unadjusted z-values
 mean_z <- round(mean(t_stats$z_val),3) 
 sd_z <- round(sd(t_stats$z_val),3) 
+threshold_nonadj <- selected_nonadj %>% 
+  summarize(left = max(case_when(z_val > mean_z ~ -Inf,TRUE~ z_val)),
+            right = min(case_when(z_val < mean_z ~ +Inf,TRUE~ z_val)))
 
-ggplot(data=t_stats) + 
-  geom_histogram(mapping=aes(x = z_val,fill=isdetected_t),
-                 bins=20,alpha = .7)+
-  scale_fill_manual(values=c("firebrick","lightblue")) +
-  labs(title = "multiple t-tests",
-       subtitle="histogram of transformed z-values",
-       x = "z-values")+
-  annotate(geom="text", x=-8, y=1500, 
+hist_zval <- ggplot(data=t_stats) + 
+  geom_histogram(
+    mapping = aes(x = z_val,after_stat(density)),
+    bins = 20, alpha = .7, fill='lightblue') +
+  geom_vline(mapping=aes(xintercept = threshold_nonadj$left),color= 'red')+    
+  geom_vline(mapping=aes(xintercept = threshold_nonadj$right),color= 'red')+
+  geom_line(mapping=aes(x = z_val,y = dnorm(z_val)),color='blue')+
+  labs(title = "multiple t-tests unadjusted",
+       subtitle="histogram of corresponding z-values",
+       x = "z-values",
+       y= "probability density")+
+  annotate(geom="text", x=-7, y=0.38, 
            label=paste0("mean: ", mean_z,"\nstdev:", sd_z))+
-
   theme_bw()
 
-# number and names of differentiated genes
-table_p_nonadj <- table(t_stats$p_val < 0.05)
-nonadj_diff_genes <- t_stats %>% filter(p_val<.05) %>% .$gene
+# signal histogram - current behaviour of p-values: uniform?
+hist_pval <- ggplot(data = t_stats) +
+  geom_histogram(mapping = aes(x = p_val),
+                 fill = "firebrick", breaks = seq(0,1,.05),alpha=.7) +
+  labs(title = 'histogram of p-values') +
+  theme_bw()
+
+grid.arrange(hist_zval, hist_pval, ncol=2)
+
+# number of differentiated genes
+table_p_nonadj <- table(t_stats$p_val < nonadj_level)
+nr_detected_nonadj <- as.numeric(table_p_nonadj['TRUE'])
 
 ```
 
-There are `r as.numeric(table_p_nonadj['TRUE'])` out of 10000 genes with unadjusted p-value below 0.05, while we expected to find 500 genes if the null hypothesis were true for all the genes.  
+There are `r nr_detected_nonadj` out of 10000 genes with non-adjusted p-values below 0.05. The selected genes are mostly found in the lower tail, the negative z-values indicate higher intensities in the group with rejected kidneys.
 
-The histogram does not show a standard normal distribution as the observations are skewed to the left. We can derive from this histogram that the differentiated genes tend to have higher intensities in the group with rejected kidneys. There is also reason to assume that the non-differentiated genes give rise to a null distribution which is not standard normal.
+The distribution is not standard normal as the observations are skewed to the left, the standard deviation is also much larger than 1.
 
+The histogram of the p-values is not uniform, a clear peak is visible for p-values lower than 5%, but the frequencies for values between 5% and 35% drop too slowly, again because of the large spread of the distribution.
 
-```{r hyptest_fdr_hist}
-#fdr analysis - current behaviour of p-values: uniform?
-t_stats %>%
-  ggplot(aes(x = p_val)) +
-  geom_histogram(fill = "firebrick",breaks = seq(0,1,.05),alpha=.7)+
-  labs(title = 'histogram of p-values')+
-  theme_bw()
-```
-
-This histogram should show a distribution which is close to a uniform distribution
-for the larger p-values, but with higher frequencies for the smallest p-values.
-The higher number of genes with small p-values indicate in that situation that some genes show a different behaviour regarding kidney rejection. 
-
-We see a more of less constant frequency for p-values higher than 35%, we also see a clear peak for p-values lower than 5% but the frequencies for values between 5% and 35% are not constant. The assumption of a standard normal null distribution is not valid. Because of this we underestimate the lower tail of the non differentiated genes with respect to the rejection status. We will scale the z values to a standard normal distribution and recalculate the associated p-values. 
-
-We will also adjust for multiple testing by controlling the false detection ratio (FDR = 10%): the list with detected genes will contain false positives, but the ratio of the truly differentiated detected genes and all the detected genes is expected to be 90%. The p-values are adjusted using the Benjamini and Hochberg[@BH:1995] procedure. 
+We will standardize the z values, recalculate the associated p-values and adjust for multiple testing by controlling the FDR to 10%. The p-values are adjusted using the @BH:1995 procedure. 
 
 ```{r hyptest_fdr_padj}
 # adjusted p values
-fdr_level <- 0.1
 t_stats <- t_stats %>%
   mutate(z_scale = (z_val - mean(z_val))/sd(z_val),
          p_scale = pnorm(z_scale),
-         p_adj = p.adjust(p_scale, method="fdr"),
-         isdetected_fdr = factor(p_adj< fdr_level,
-                         levels=c(TRUE,FALSE),
-                         labels = c('detected','H0 not rejected')))
+         p_adj = p.adjust(p_scale, method="fdr"))
+
+# these are the detected genes and a histogram of their t-values
+fdr_level <- 0.1
+selected_fdr <- t_stats %>% filter(p_adj < fdr_level)
+
+# plot histogram
+threshold_fdr <- selected_fdr %>% 
+  summarize(left = max(case_when(z_scale > 0~-Inf,TRUE~ z_scale)),
+            right = min(case_when(z_scale < 0~+Inf,TRUE~ z_scale)))
+
+hist_fdr <- ggplot(t_stats) + 
+  geom_histogram(mapping=aes(x = z_scale, after_stat(density)),
+                             fill="lightblue", bins = 20, alpha=.7)+
+  geom_vline(mapping=aes(xintercept=threshold_fdr$left),color='red') +    
+  geom_line(mapping = aes(x=z_scale, y= dnorm(z_scale)),color='blue') +
+  labs(title = "multiple t-tests FDR",
+       caption = 'histogram of transformed z-values, rescaled and adjusted for multiple testing')+
+  theme_bw()            
+
+# signal histogram - current behaviour of p-values: uniform?
+hist_pscale <- ggplot(data = t_stats) +
+  geom_histogram(mapping = aes(x = p_scale),
+                 fill = "firebrick", breaks = seq(0,1,.05),alpha=.7) +
+  labs(title = 'histogram of p-values') +
+  theme_bw()
 
 # monotonous transformation:
 pp_adj <- t_stats %>%
-  ggplot(aes(x=p_scale,y=p_adj)) +
-  geom_point(size = .3,color='red') +
+  ggplot(aes(x = p_scale,y = p_adj)) +
+  geom_point(size = .3,color='blue') +
   geom_segment(x=0,y=0,xend=1,yend=1) +
-  labs(y= "adjusted p-value (BH, 1995)") +
+  geom_hline(yintercept = fdr_level, color='red') +
+  labs(title = "Adjusting the p-values",
+       y= "adjusted p-value (BH, 1995)") +
   theme_bw()
 
-# right plot removes observations with high fdr 
-suppressWarnings(
-  grid.arrange(pp_adj,
-             pp_adj + ylim(c(0,fdr_level)),
-             ncol=2))
+# show histogram z-values +  monotonous adjustment for the p-values
+grid.arrange(hist_fdr, hist_pscale, pp_adj, ncol=3)
 
-# these are the detected genes and a histogram of their t-values
+# number of detected genes
 table_p_adj <- table(t_stats$p_adj < fdr_level)
 nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
-fdr_genes <- t_stats %>% filter(p_adj < fdr_level)%>% .$gene
-ggplot(t_stats) + 
-  scale_fill_manual(values=c("firebrick","lightblue")) +
-  geom_histogram(mapping=aes(x = stat, fill=isdetected_fdr), 
-                 bins = 20,alpha=.7)+
-  labs(title= 't-statistics for differentiated genes FDR',
-       subtitle = ' p-values, rescaled and adjusted for multiple testing')+
-  theme_bw()            
-  
+
 ```
 
-The scaling has lowerd the number of candidate genes drastically.
-There are now `r nr_detected_fdr` out of 10000 genes with adjusted p-value below 10%. We still expect `r round(nr_detected_fdr/10,-1)` of these genes to be false detections. 
+The scaling has lowered the number of candidate genes drastically.
+There are now `r nr_detected_fdr` genes with adjusted p-value below 10%. All of the detected genes are now found in the lower tail. 
 
-All of the detected genes are found in the lower tail, which seems acceptable. The histogram of the non selected genes is still skewed to the left however. The histogram also gives the impression that we should have gotten more differenciated genes.
+The histogram of the non selected genes is still skewed to the left. Both the density plot and the histogram of the p-values show that the assumption of a normal distribution is violated. The @BH:1995 procedure is too conservative for this data set. 
 
-We will try to make a better list using a local approach where we assume that the observed histogram represents a mixture of different Gaussian distributions, each with their own mean and standard deviance. We will use the z-values before scaling for this part. The means and standard deviance of the different distributions will be calculated using maximum likelihood.
-
+We believe we can detect more differentiated genes using a local approach where we assume that the observed histogram represents a mixture of different Gaussian distributions, each with their own mean and standard deviance. We will start from the original z-values, the parameters of the Gaussian distributions will be estimated with maximum likelihood.
 
 
 ```{r localfdr}
@@ -166,10 +172,9 @@ fdr_x <- locfdr(t_stats$z_val,plot=4)
 prop_h0 <- fdr_x$fp0['mlest','p0']
 ```
 
-The left plot shows the density of both population. The proportion of differentiated genes is expected to be`r round(100*(1 - prop_h0),2)` percent. This means `r round(10000*(1 - prop_h0),0)`genes for our data set. The blue line represents the null distribution, the purple bars represent the differentiated genes. We do not expect to find signal genes with high t-values. 
+The left plot shows the density of both populations. The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`%. This means `r round(10000*(1 - prop_h0),0)` genes for our data set. We do not expect to find signal genes in the right tail. 
 
-The second plot shows the local false discovery rate. Since we want to control the FDR we are more interested in the red dashed line, which represents the left FDR-graph with the FDR for all the genes in the left tail of the empirical distribution. The Efdr represents the expected local fdr for a typical non-null feature, i.e. the mean local fdr, weighted with the density represented by all the purple bars.
-
+The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The height of the left FDR-graph is the FDR for all the genes with z-values smaller than the threshold shown on the x-axis.
 
 ```{r control_lfdr}
 
@@ -186,9 +191,9 @@ cdf_true_positive = sum(dens1_mat[1:id])+ dens1_mat[id+1]* t_int
 prop_tp_r <- cdf_true_positive/sum(dens1_mat)
 ```
 
-The threshold for a local fdr of 20% is `r fdr_x$z.2[1]`. If we want to control the FDR for 10%, we have to find the value on the x-axis for which the left FDR - graph is equal to 10%. The threshold for the z-values using interpolation on the points of the left FDR-graph becomes: `r round(threshold,3)`.
+We want to control the FDR for 10%, for this we can find the value on the x-axis for which the left FDR - graph is equal to 10% (or calculate the threshold using interpolation), the threshold for the z-values becomes `r round(threshold,3)`.
 
-The third graph returns the probability that a non-null gene can be detected when the nominal local fdr is set at a given local fdr-level. The local fdr-level associated with an FDR of 10% is `round(100* lfdr_level,1)` percent which means that we expect `r round(100*prop_tp_r)` percent of all differentiated genes to be correctly identified.   
+The third graph returns the probability that a non-null gene can be detected when the nominal local fdr is set at a given local fdr-level. The local fdr-level associated with an FDR of 10% is `r round(100* lfdr_level,1)`% which means that we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
 
 ```{r lfdr_genes}
 
@@ -212,7 +217,24 @@ ggplot(t_stats) +
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
 ```
 
-We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. The mean local fdr the detected genes is `r round(100*summ_lfdr$mean_lfdr,1)` percent, which means we expect to have `r round(summ_lfdr$mean_lfdr* summ_lfdr$nr_of_genes)` falsely detected genes. The genes detected by the of the local fdr will be added as an appendix.  
+We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. The mean local fdr the detected genes is `r round(100*summ_lfdr$mean_lfdr,1)`%, we expect to have `r round(summ_lfdr$mean_lfdr* summ_lfdr$nr_of_genes)` falsely detected genes. The genes detected by the of the local fdr will be added as an appendix.  
+
+### Shorter version voor hypothesis testing: only text
+In this section we find out which genes are differentially expressed between the two kidney rejection groups. Since we do not know a priori whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances.
+
+\[H_0: \mu_{normal}(gene) = \mu_{reject}(gene) \]
+\[H_1: \mu_{normal}(gene) \neq \mu_{reject}(gene) \]
+
+We first performed t-tests for every gene in the data, with an individual significance level of 5% (`r as.numeric(table_p_nonadj['TRUE'])`  genes). The histogram indicates that the spread of the transformed z-value is too large, and that there are enough differentiated genes present to visibly skew the distribution.
+
+After centering and scaling the z values, we adjusted for multiple testing by controlling the FDR to 10% [@BH:1995]. This procedure lowered the number of candidate genes drastically (`r nr_detected_fdr` genes), mainly because of the scaling. The density plot still does not fit the standard normal distribution.
+
+The local fdr seems a better approach since it allows for more than one cluster. Starting from the original z-values the parameter of each distribution is estimated with maximum likelihood. 
+The red dashed line on the middle plot represents the FDR. In order to control the FDR for 10%, we find the value on the x-axis for which this height is equal to 10% (or calculate this threshold using interpolation), the threshold for the z-values becomes `r round(threshold,3)`.
+The third graph returns the probability to detect a differentiated non-null gene given the local fdr-level. The local fdr-level associated with an FDR of 10% is `r round(100* lfdr_level,1 )`%, which means that we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.
+
+The proportion of differentiated genes is expected to be `r round(100*(1-prop_h0),2)`% percent. This means `r round(10000*(1 - prop_h0),0)` genes for our data set. We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. The mean local fdr the detected genes is `r round(100* lfdr_level,1)`%, so we expect to have `r round(summ_lfdr$mean_lfdr* summ_lfdr$nr_of_genes)` falsely detected genes. 
+The genes detected by the local fdr will be added as an appendix.
 
 ## Model Selection
 In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a train (70%) and test (30%) dataset.
@@ -249,7 +271,7 @@ n_PC
 ```
 First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PC's are available.
 
-```{r full PCR, cache=TRUE}
+```{r fullPCR, cache=TRUE}
 fit_data <- data.frame(trainY, Z)
 
 ## Example of PC Log. Reg. with all PCs
@@ -266,7 +288,7 @@ full_model_cv$delta[1] # This is the AUC for this particular model estimated by 
 ```
 First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into (hoeveel we er kiezen) approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
 
-```{r each PC, cache=TRUE}
+```{r eachPC, cache=TRUE}
 ## Now we'll wrap this code in a for-loop and repeat for each number of PCs
 cv_auc <- vector("numeric", length = n_PC)
 set.seed(1234) # seed for reproducibility
@@ -285,7 +307,9 @@ for (i in seq_len(n_PC)) {
 }
 
 #als ik hier een k=10 gebruik, krijg ik de Error in roc.default(response, predictor, auc = TRUE, ...) : 'response' must have two levels
-names(cv_auc) <- seq_along(cv_auc) => niet in alle CV trainingsets zit dan de 2 rejection status?
+#=> niet in alle CV trainingsets zit dan de 2 rejection status?
+names(cv_auc) <- seq_along(cv_auc) 
+
 cv_auc
 
 ## Finding the optimal nr. of PCs corresponds to finding the max. AUC
@@ -299,10 +323,10 @@ abline(v = optim_nPC, col = "red")
 
 In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of `r optim_nPC`, which corresponds to an AUC of `cv_auc[optim_nPC]`.
 
-```{r PCR, cache=TRUE}
+```{r PCRfinal, cache=TRUE}
 pca <- prcomp(trainX)
 Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
-Zk <- pca$x[, 1:optim_PC]
+Zk <- pca$x[, 1:optim_nPC]
 
 pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 summary(pcr_model1)
