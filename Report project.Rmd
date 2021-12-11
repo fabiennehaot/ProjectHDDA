@@ -35,7 +35,185 @@ Y <- factor(Einecke2010Kidney[, 1],
 ```
 
 ## Exploration of the Data
+The data exploration is started by examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we look at possible outliers. The following plot illustrates that the data seem to be calibrates, close to centered but not scaled. Finally, no outliers were found.
 
+```{r, echo=FALSE}
+#missing values
+nr_values  <- sapply(X_raw, function(var) {length(var)})
+nr_missing <- sapply(X_raw, function(var) {length(which(is.na(var)))})
+nr_unique  <- sapply(X_raw, function(var) {n_distinct(var)})
+
+#outliers
+max_per_var <- sapply(Einecke2010Kidney, max)
+min_per_var <- sapply(Einecke2010Kidney, min)
+mean_per_var <- sapply(Einecke2010Kidney, mean)
+tb_summary <- tibble(Name= colnames(Einecke2010Kidney),
+                     Nr = seq_along(Einecke2010Kidney),
+                     MaxPerVar = max_per_var,
+                     MinPerVar = min_per_var,
+                     MeanPerVar=mean_per_var)
+ggplot(data=tb_summary)+
+  geom_point(mapping=aes(x= Nr,y=MinPerVar),col='blue',size=.3)+
+  geom_point(mapping=aes(x= Nr,y=MeanPerVar),col='green',size=.3)+
+  geom_point(mapping=aes(x= Nr,y=MaxPerVar),col='red',size=.3)+
+  theme_bw()
+
+X <- scale(X_raw)
+
+```
+To get a better idea of the data, we plot the observations on the first two genes. Here, we don’t see a separation of kidney acceptance and therefore, in the next step we execute PCA to get more insight. 
+
+```{r}
+Einecke2010Kidney$rejection_fac <- as.factor(ifelse(Einecke2010Kidney$Reject_Status == 0, "Accepted", "Rejected"))
+ggplot(Einecke2010Kidney) +
+  geom_point(aes(X211352_s_at, X239275_at, col = rejection_fac)) +
+  ggtitle("Visualizing the data on the first 2 genes")
+
+```
+To get a better idea of the data, we plot the observations on the first two genes. Here, we don’t see a separation of kidney acceptance and therefore, in the next step we execute PCA to get more insight. 
+
+```{r pressure, echo=FALSE}
+#PCA
+svd_x <- svd(X)
+Z <- svd_x$u %*% diag(svd_x$d) # Calculate the scores
+V <- svd_x$v                 # Calculate the loadings
+pca_x <- prcomp(X, center = FALSE, scale. = FALSE)
+
+par(pch = 19, mfrow = c(1, 2))
+plot(svd_x$d, type = "b", ylab = "Singular values", xlab = "PCs")
+
+var_explained <- svd_x$d^2 / sum(svd_x$d^2)
+plot(var_explained,
+     type = "b", ylab = "Percent variance explained", xlab = "PCs",
+     col = 2
+)
+```
+The first 2 PC’s explain 19% of the variability of X and with the first 50 PC’s we obtain 63% of the variability of PC’s. 
+
+To get more insight in the research question, we examine whether kidney rejection is associated the first two PC’s, the following plot illustrates this. 
+```{r}
+Scores <- X %*% svd_x$v
+tb_scores <- tibble(PCA1 = Scores[,1],
+                    PCA2 = Scores[,2],
+                    Object=rownames(Scores),
+                    Rejected = as.factor(Y))
+
+ggplot(tb_scores)+
+  geom_point(mapping=aes(x= PCA1,y=PCA2, col=Rejected))+
+  labs(title="Scores for 2 PCA's")+
+  theme_bw()  
+```
+We see the PC’s do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in top right corner.
+
+Next, it is interesting to get more information on which genes are driving the PC’s. A lot of the PC’s are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
+
+```{r}
+V[1:20, 1]
+V[1:20, 2]
+
+
+
+```
+
+```{r}
+hist(V[, 1], breaks = 50, xlab = "PC 1 loadings", main = "")
+abline(v = c(
+  quantile(V[, 1], 0.05),
+  quantile(V[, 1], 0.95)
+), col = "red", lwd = 2)
+```
+
+```{r}
+hist(V[, 2], breaks = 50, xlab = "PC 2 loadings", main = "")
+abline(v = c(
+  quantile(V[, 2], 0.05),
+  quantile(V[, 2], 0.95)
+), col = "red", lwd = 2)
+
+```
+The histograms confirm this which gives us a reason to believe that sparse PCA is worthwhile. 
+
+```{r}
+set.seed(45)
+fit_loadings1 <- cv.glmnet(X, Z[, 1],
+                           alpha = 0.5, nfolds = 5)
+set.seed(45)
+fit_loadings2 <- cv.glmnet(X, Z[, 2], alpha = 0.5, nfolds = 5)
+
+par(mfrow = c(1, 1))
+plot(fit_loadings1$glmnet.fit, main = "PC1", xvar = "lambda")
+abline(v = log(fit_loadings1$lambda.min), lty = 3)
+abline(v = log(fit_loadings1$lambda.1se), lty = 3)
+plot(fit_loadings2$glmnet.fit, main = "PC2", xvar = "lambda")
+abline(v = log(fit_loadings2$lambda.min), lty = 3)
+abline(v = log(fit_loadings2$lambda.1se), lty = 3)
+```
+```{r}
+fit_loadings1
+fit_loadings2
+
+```
+
+```{r}
+sparse_loadings1 <- as.vector(coef(fit_loadings1, s = fit_loadings1$lambda.1se))
+sparse_loadings2 <- as.vector(coef(fit_loadings2, s = fit_loadings2$lambda.1se))
+## How many non-zero loadings do we have (excluding the intercept)?
+(non_zero1 <- sum(abs(sparse_loadings1[-1]) > 0))
+(non_zero2 <- sum(abs(sparse_loadings2[-1]) > 0))
+
+SPC1 <- X %*% sparse_loadings1[-1] # without the intercept
+SPC2 <- X %*% sparse_loadings2[-1] # without the intercept
+```
+For both PC1 and PC2 around 200 genes are important.
+
+```{r}
+par(mfrow = c(1, 2))
+cols <- c("0" = "red", "1" = "blue")
+plot(Z[, 1], Z[, 2],
+     col = cols[Y], xlab = "PC1", ylab = "PC2", pch = 16,
+     main = "All genes \nfor PC1 and PC2"
+)
+plot(SPC1, SPC2,
+     col = cols[Y], xlab = "SPC1", ylab = "SPC2", pch = 16,
+     main = paste(non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
+)
+```
+
+We clearly can can see that with this subset of genes the same result can be obtained.
+
+Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. When executing the LDA in R we achieved the warning that the variables are collinear, which is confirmed by the sparse PCA. 
+```{r, warning=FALSE}
+kidney.lda <- MASS::lda(x = X, grouping = Y)
+Vlda <- kidney.lda$scaling
+colnames(Vlda) <- paste0("V",1:ncol(Vlda))
+Zlda <- X%*%Vlda
+colnames(Zlda) <- paste0("Z",1:ncol(Zlda))
+par(mfrow = c(1, 1))
+boxplot(Zlda ~ Y, col = cols, ylab = expression("Z"[1]),
+        main = "Separation of accepted and rejected samples by LDA")
+```
+
+The LDA separates the accepted case (red) and the rejected case (blue) fairly well. However, it might be worthwhile to execute a sparse LDA due to the collinearity between thhe genes. The result of this is illustrated in the next figure.
+
+```{r}
+set.seed(45)
+lda_loadings <- cv.glmnet(X, Zlda, alpha = 0.5, nfolds = 5)
+plot(lda_loadings)
+
+sparse_lda_loadings <- as.vector(
+  coef(lda_loadings, s = lda_loadings$lambda.1se)
+)
+
+SLDA <- X %*% sparse_lda_loadings[-1]
+
+# number of non-zero loadings
+n_nonzero <- sum(sparse_lda_loadings != 0)
+boxplot(SLDA ~ Y,
+        col = cols, ylab = "SLDA",
+        main = sprintf("Subset of %d genes", n_nonzero)
+)
+```
+We see that the accepted cases are situated just below 0 and the rejected cases around 1.
 ## Hypothesis Testing 
 Not every gene in the data set is an indicator for kidney rejection. In this section we find out which genes behave differently between the two kidney rejection groups. Since we do not know a priori whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances. 
 
@@ -246,12 +424,22 @@ set.seed(1234)
 trainset <- sample(nrow(X_raw), 0.7*nrow(X_raw))
 trainX <- X_raw[trainset, ]
 trainX <- scale(trainX, center = TRUE, scale = TRUE)
+scale_factor <- attr(trainX,"scaled:scale")
+scale_translation <- attr(trainX,"scaled:center")
+trainX <- as.data.frame(trainX)
+
 dim(trainX) #175*10000
 trainY <- Y[trainset]
-
 testX <- X_raw[-trainset, ]
 dim(testX) #75*10000
 testY <- Y[-trainset]
+
+for (varnr in seq_along(testX)){
+    xbar <- scale_translation[varnr]
+    xsd <- scale_factor[varnr]
+    testX[[varnr]] <- (testX[[varnr]]-xbar )/xsd}
+    
+list(tr_x = trainX, tr_y = trainY, test_x = testX, test_y = testY)
 
 train_data <- data.frame(trainY, trainX)
 test_data <- data.frame(testY, testX)
@@ -307,9 +495,13 @@ for (i in seq_len(n_PC)) {
 }
 
 #als ik hier een k=10 gebruik, krijg ik de Error in roc.default(response, predictor, auc = TRUE, ...) : 'response' must have two levels
+<<<<<<< HEAD
 #=> niet in alle CV trainingsets zit dan de 2 rejection status?
 names(cv_auc) <- seq_along(cv_auc) 
 
+=======
+names(cv_auc) <- seq_along(cv_auc) 
+>>>>>>> 6eb117c9149fcc35e97f241c01313299c49de4e5
 cv_auc
 
 ## Finding the optimal nr. of PCs corresponds to finding the max. AUC
@@ -323,7 +515,11 @@ abline(v = optim_nPC, col = "red")
 
 In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of `r optim_nPC`, which corresponds to an AUC of `cv_auc[optim_nPC]`.
 
+<<<<<<< HEAD
 ```{r PCRfinal, cache=TRUE}
+=======
+```{r PCR 2, cache=TRUE, warning=FALSE}
+>>>>>>> 6eb117c9149fcc35e97f241c01313299c49de4e5
 pca <- prcomp(trainX)
 Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
 Zk <- pca$x[, 1:optim_nPC]
