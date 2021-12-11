@@ -1,13 +1,8 @@
 ---
 title: "HDDA Project"
-<<<<<<< HEAD
-author: "L. Barbier, K. De Witte, F. Haot, K. Putseys"
-date: "12/16/2021"
-bibliography: references.bib
-=======
 author: "Lisa Barbier, Klara Dewitte, Fabienne Haot, Kasimir Putseys"
 date: "December 2021"
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
+bibliography: references.bib
 output: html_document
 ---
 
@@ -68,7 +63,6 @@ ttest_results <- apply(gene_data, 2, function(x) {
   z_val <- case_when(stat < 0 ~ qnorm(p_val/2), TRUE~ qnorm(1-p_val/2))
   tibble(stat = stat, p_val = p_val,z_val = z_val, df = df)})
 t_stats <- bind_rows(ttest_results) %>%
-<<<<<<< HEAD
   mutate(gene = colnames(X_raw),
          isdetected_t = factor(p_val < significance_level,
                          levels=c(TRUE, FALSE),
@@ -79,38 +73,21 @@ mean_z <- round(mean(t_stats$z_val),3)
 sd_z <- round(sd(t_stats$z_val),3) 
 
 ggplot(data=t_stats) + 
-  geom_histogram(mapping=aes(x = z_val,fill=isdetected_t),bins=20,alpha = .7)+
+  geom_histogram(mapping=aes(x = z_val,fill=isdetected_t),
+                 bins=20,alpha = .7)+
   scale_fill_manual(values=c("firebrick","lightblue")) +
   labs(title = "multiple t-tests",
        subtitle="histogram of transformed z-values",
        x = "z-values")+
   annotate(geom="text", x=-8, y=1500, 
            label=paste0("mean: ", mean_z,"\nstdev:", sd_z))+
-=======
-  mutate(
-    gene = colnames(X_raw),
-    relevant = cut(z_val,
-                   c(-Inf, qnorm(.025), qnorm(.975), Inf), 
-                   labels = c('low', 'mid', 'high')))
 
-
-ggplot(data=as.data.frame(t_stats)) + 
-  geom_point(mapping = aes(x = seq_along(stat), y = stat,
-                         color = relevant),size=.3)+
-  labs(title = "t-statistics", x = "gene", y = "unadjusted t-statistic",
-       caption = "There are more observations in the lower tail") +
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
   theme_bw()
 
 # number and names of differentiated genes
 table_p_nonadj <- table(t_stats$p_val < 0.05)
-<<<<<<< HEAD
 nonadj_diff_genes <- t_stats %>% filter(p_val<.05) %>% .$gene
-=======
-no_corr_genes <- t_stats %>% 
-  filter(p_val < .05) %>%
-  .$gene
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
+
 ```
 
 There are `r as.numeric(table_p_nonadj['TRUE'])` out of 10000 genes with unadjusted p-value below 0.05, while we expected to find 500 genes if the null hypothesis were true for all the genes.  
@@ -122,11 +99,7 @@ The histogram does not show a standard normal distribution as the observations a
 #fdr analysis - current behaviour of p-values: uniform?
 t_stats %>%
   ggplot(aes(x = p_val)) +
-<<<<<<< HEAD
   geom_histogram(fill = "firebrick",breaks = seq(0,1,.05),alpha=.7)+
-=======
-  geom_histogram(fill = "firebrick",breaks = seq(0, 1, .05))+
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
   labs(title = 'histogram of p-values')+
   theme_bw()
 ```
@@ -143,7 +116,6 @@ We will also adjust for multiple testing by controlling the false detection rati
 # adjusted p values
 fdr_level <- 0.1
 t_stats <- t_stats %>%
-<<<<<<< HEAD
   mutate(z_scale = (z_val - mean(z_val))/sd(z_val),
          p_scale = pnorm(z_scale),
          p_adj = p.adjust(p_scale, method="fdr"),
@@ -164,25 +136,6 @@ suppressWarnings(
   grid.arrange(pp_adj,
              pp_adj + ylim(c(0,fdr_level)),
              ncol=2))
-=======
-  mutate(p_adj = p.adjust(p_val, method = "fdr"))
-
-# monotonous transformation:
-pp_adj <- t_stats %>%
-  ggplot(aes(x = p_val, y = p_adj)) +
-  geom_point(size = .3, color = 'blue') +
-  geom_segment(x = 0, y = 0, xend = 1, yend = 1) +
-  labs(y = "adjusted p-value (BH, 1995)") +
-  theme_bw()
-
-# right plot removes observations with high fdr 
-# 8090 obs are removed when ylim .05
-# 7575 when ylim .1
-# plotting seems to take a while
-grid.arrange(pp_adj,
-             pp_adj + ylim(c(0, fdr_level)),
-             ncol = 2)
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
 
 # these are the detected genes and a histogram of their t-values
 table_p_adj <- table(t_stats$p_adj < fdr_level)
@@ -190,7 +143,8 @@ nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 fdr_genes <- t_stats %>% filter(p_adj < fdr_level)%>% .$gene
 ggplot(t_stats) + 
   scale_fill_manual(values=c("firebrick","lightblue")) +
-  geom_histogram(mapping=aes(x = stat, fill=isdetected_fdr), bins = 20,alpha=.7)+
+  geom_histogram(mapping=aes(x = stat, fill=isdetected_fdr), 
+                 bins = 20,alpha=.7)+
   labs(title= 't-statistics for differentiated genes FDR',
        subtitle = ' p-values, rescaled and adjusted for multiple testing')+
   theme_bw()            
@@ -216,7 +170,6 @@ The left plot shows the density of both population. The proportion of differenti
 
 The second plot shows the local false discovery rate. Since we want to control the FDR we are more interested in the red dashed line, which represents the left FDR-graph with the FDR for all the genes in the left tail of the empirical distribution. The Efdr represents the expected local fdr for a typical non-null feature, i.e. the mean local fdr, weighted with the density represented by all the purple bars.
 
-<<<<<<< HEAD
 
 ```{r control_lfdr}
 
@@ -231,9 +184,6 @@ threshold <- z_mat[id] * (1-t_int) + z_mat[id]*t_int
 lfdr_level <- lfdr_mat[id] * (1-t_int) + lfdr_mat[id]*t_int
 cdf_true_positive = sum(dens1_mat[1:id])+ dens1_mat[id+1]* t_int
 prop_tp_r <- cdf_true_positive/sum(dens1_mat)
-=======
-fdr_x <- locfdr(t_stats$z_val, plot = 3) 
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
 ```
 
 The threshold for a local fdr of 20% is `r fdr_x$z.2[1]`. If we want to control the FDR for 10%, we have to find the value on the x-axis for which the left FDR - graph is equal to 10%. The threshold for the z-values using interpolation on the points of the left FDR-graph becomes: `r round(threshold,3)`.
@@ -251,18 +201,15 @@ t_stats <- t_stats %>%
                         labels = c('detected','H0 not rejected')))
 summ_lfdr <- t_stats %>%
   filter(lfdr < lfdr_level) %>%
-<<<<<<< HEAD
   summarize(nr_of_genes=n(), mean_lfdr=mean(lfdr))
 
 ggplot(t_stats) + 
   scale_fill_manual(values=c("firebrick","lightblue")) +
-  geom_histogram(mapping=aes(x = stat, fill=isdetected_lfdr), bins = 20,alpha = .7)+
+  geom_histogram(mapping=aes(x = stat, fill=isdetected_lfdr),
+                 bins = 20,alpha = .7)+
   labs(title= 't-statistics for differentiated genes Local FDR')+
   theme_bw()       
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
-=======
-  summarize(nr_of_genes = n(), mean_fdr = mean(lfdr))
->>>>>>> a62b877bd2ca1b45d534b311c9c01ab4f3ba8da1
 ```
 
 We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. The mean local fdr the detected genes is `r round(100*summ_lfdr$mean_lfdr,1)` percent, which means we expect to have `r round(summ_lfdr$mean_lfdr* summ_lfdr$nr_of_genes)` falsely detected genes. The genes detected by the of the local fdr will be added as an appendix.  
