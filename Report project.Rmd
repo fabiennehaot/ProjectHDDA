@@ -224,12 +224,22 @@ set.seed(1234)
 trainset <- sample(nrow(X_raw), 0.7*nrow(X_raw))
 trainX <- X_raw[trainset, ]
 trainX <- scale(trainX, center = TRUE, scale = TRUE)
+scale_factor <- attr(trainX,"scaled:scale")
+scale_translation <- attr(trainX,"scaled:center")
+trainX <- as.data.frame(trainX)
+
 dim(trainX) #175*10000
 trainY <- Y[trainset]
-
 testX <- X_raw[-trainset, ]
 dim(testX) #75*10000
 testY <- Y[-trainset]
+
+for (varnr in seq_along(testX)){
+    xbar <- scale_translation[varnr]
+    xsd <- scale_factor[varnr]
+    testX[[varnr]] <- (testX[[varnr]]-xbar )/xsd}
+    
+list(tr_x = trainX, tr_y = trainY, test_x = testX, test_y = testY)
 
 train_data <- data.frame(trainY, trainX)
 test_data <- data.frame(testY, testX)
@@ -285,7 +295,7 @@ for (i in seq_len(n_PC)) {
 }
 
 #als ik hier een k=10 gebruik, krijg ik de Error in roc.default(response, predictor, auc = TRUE, ...) : 'response' must have two levels
-names(cv_auc) <- seq_along(cv_auc) => niet in alle CV trainingsets zit dan de 2 rejection status?
+names(cv_auc) <- seq_along(cv_auc) 
 cv_auc
 
 ## Finding the optimal nr. of PCs corresponds to finding the max. AUC
