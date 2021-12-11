@@ -495,13 +495,9 @@ for (i in seq_len(n_PC)) {
 }
 
 #als ik hier een k=10 gebruik, krijg ik de Error in roc.default(response, predictor, auc = TRUE, ...) : 'response' must have two levels
-<<<<<<< HEAD
-#=> niet in alle CV trainingsets zit dan de 2 rejection status?
+
 names(cv_auc) <- seq_along(cv_auc) 
 
-=======
-names(cv_auc) <- seq_along(cv_auc) 
->>>>>>> 6eb117c9149fcc35e97f241c01313299c49de4e5
 cv_auc
 
 ## Finding the optimal nr. of PCs corresponds to finding the max. AUC
@@ -515,11 +511,8 @@ abline(v = optim_nPC, col = "red")
 
 In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of `r optim_nPC`, which corresponds to an AUC of `cv_auc[optim_nPC]`.
 
-<<<<<<< HEAD
 ```{r PCRfinal, cache=TRUE}
-=======
-```{r PCR 2, cache=TRUE, warning=FALSE}
->>>>>>> 6eb117c9149fcc35e97f241c01313299c49de4e5
+
 pca <- prcomp(trainX)
 Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
 Zk <- pca$x[, 1:optim_nPC]
