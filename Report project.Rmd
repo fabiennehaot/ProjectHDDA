@@ -77,7 +77,7 @@ par(pch = 19, mfrow = c(1, 2))
 var_explained <- svd_x$d^2 / sum(svd_x$d^2)
 plot(var_explained,
      type = "b", ylab = "Percent variance explained", xlab = "PCs",
-     title = "Figure 2: ")
+     title = "Figure 2: ",
      col = 2
 )
 
