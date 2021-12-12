@@ -528,7 +528,18 @@ Zk <- pca$x[, 1:optim_nPC]
 pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 summary(pcr_model1)
 suppressMessages(plot(pcr_model1, plottype = "validation"))
+
+pcr_train = tibble(pcr_score = pcr_model1$fitted.values, 
+                   rejection = trainY)
+p_dens_pcr <- ggplot(pcr_train)+
+  geom_density(mapping=aes(x= pcr_score, fill=rejection), alpha = 0.5)+
+  labs(title="Density for 2 PC's: densities")+
+  scale_fill_manual(values=c('red','blue'))+
+  theme_bw() 
+p_dens_pcr
 ```
+
+
 In the last step, a principle component egression model with `r optim_nPC` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
 
 # Lasso regression
