@@ -55,7 +55,8 @@ tb_summary <- tibble(Name= colnames(Einecke2010Kidney),
 ggplot(data=tb_summary) +
   geom_point(mapping = aes(x = Nr, y = MinPerVar), col = 'blue', size = .3)+
   geom_point(mapping = aes(x = Nr, y = MeanPerVar), col = 'green', size = .3) +
-  geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3)+
+  geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3) +
+  ggtitl("Figure 1")
   theme_bw()
 
 X <- scale(X_raw)
@@ -87,7 +88,7 @@ tb_scores <- tibble(PCA1 = Scores[,1],
 
 ggplot(tb_scores) +
   geom_point(mapping = aes(x = PCA1, y = PCA2, col = Rejected)) +
-  labs(title = "Scores for 2 PCA's") +
+  labs(title = "Figure 2: Scores for 2 PCA's") +
   theme_bw()  
 
 ```
