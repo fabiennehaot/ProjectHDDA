@@ -456,7 +456,7 @@ Here, we will evaluate three prediction models: principal component regression (
 
 # Principal compentent regression (PCR)
 
-```{r PCR}
+```{r PCR, include=FALSE}
 # Calculate PCA and extract scores
 pca_X <- prcomp(trainX)
 Z <- pca_X$x
@@ -467,22 +467,21 @@ n_PC
 ```
 First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PC's are available.
 
-```{r fullPCR, cache=TRUE}
+```{r fullPCR, include = FALSE, warning = FALSE}
 fit_data <- data.frame(trainY, Z)
 
-## Example of PC Log. Reg. with all PCs
+## Logistic regression with all the PC's
 full_model <- suppressMessages(glm(trainY ~ ., data = fit_data, family = "binomial"))
 
-set.seed(1234)
+set.seed(42)
 full_model_cv <- suppressMessages(cv.glm(
   data = fit_data,  glmfit = full_model,
-  cost = auc, K = 10  # note: specify the auc function (from pROC) without`()`!
+  cost = auc, K = 9  
 ))
 
-## We'll just use the raw one here
-full_model_cv$delta[1] # This is the AUC for this particular model estimated by AUC
+full_model_cv$delta[1] 
 ```
-First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into (hoeveel we er kiezen) approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
+First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
 
 ```{r eachPC, cache=TRUE}
 ## Now we'll wrap this code in a for-loop and repeat for each number of PCs
