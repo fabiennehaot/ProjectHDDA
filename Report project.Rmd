@@ -31,7 +31,7 @@ Data description in [@einecke:2010]
 data("Einecke2010Kidney")
 X_raw <- Einecke2010Kidney[, -1]
 Y <- factor(Einecke2010Kidney[, 1], 
-            levels = c(0,1),labels = c('accept','reject'))
+            levels = c(0,1),labels = c('accept', 'reject'))
 ```
 
 ## Exploration of the Data
@@ -51,11 +51,11 @@ tb_summary <- tibble(Name= colnames(Einecke2010Kidney),
                      Nr = seq_along(Einecke2010Kidney),
                      MaxPerVar = max_per_var,
                      MinPerVar = min_per_var,
-                     MeanPerVar=mean_per_var)
-ggplot(data=tb_summary)+
-  geom_point(mapping=aes(x= Nr,y=MinPerVar),col='blue',size=.3)+
-  geom_point(mapping=aes(x= Nr,y=MeanPerVar),col='green',size=.3)+
-  geom_point(mapping=aes(x= Nr,y=MaxPerVar),col='red',size=.3)+
+                     MeanPerVar = mean_per_var)
+ggplot(data=tb_summary) +
+  geom_point(mapping = aes(x = Nr, y = MinPerVar), col = 'blue', size = .3)+
+  geom_point(mapping = aes(x = Nr, y = MeanPerVar), col = 'green', size = .3) +
+  geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3)+
   theme_bw()
 
 X <- scale(X_raw)
@@ -82,12 +82,12 @@ plot(var_explained,
 Scores <- X %*% svd_x$v
 tb_scores <- tibble(PCA1 = Scores[,1],
                     PCA2 = Scores[,2],
-                    Object=rownames(Scores),
+                    Object = rownames(Scores),
                     Rejected = as.factor(Y))
 
-ggplot(tb_scores)+
-  geom_point(mapping=aes(x= PCA1,y=PCA2, col=Rejected))+
-  labs(title="Scores for 2 PCA's")+
+ggplot(tb_scores) +
+  geom_point(mapping = aes(x = PCA1, y = PCA2, col = Rejected)) +
+  labs(title = "Scores for 2 PCA's") +
   theme_bw()  
 
 ```
@@ -155,9 +155,9 @@ Finally, because PCA only takes the genes into account in the decomposition and 
 ```{r LDA, warning=FALSE, echo=FALSE}
 kidney.lda <- MASS::lda(x = X, grouping = Y)
 Vlda <- kidney.lda$scaling
-colnames(Vlda) <- paste0("V",1:ncol(Vlda))
+colnames(Vlda) <- paste0("V", 1:ncol(Vlda))
 Zlda <- X%*%Vlda
-colnames(Zlda) <- paste0("Z",1:ncol(Zlda))
+colnames(Zlda) <- paste0("Z", 1:ncol(Zlda))
 par(mfrow = c(1, 2))
 boxplot(Zlda ~ Y, col = cols, ylab = expression("Z"[1]),
         main = "LDA with total set of genes")
@@ -193,7 +193,7 @@ We first perform these t-tests for every gene in the data, with an individual si
 gene_data <- as.matrix(X_raw)
 group <- Y
 # non adjusted p-values 
-ttest_results <- apply(gene_data, 2, function(x) {
+ttest_results <- apply(gene_data, 2, function(x){
   t_test <- t.test(x ~ group)
   p_val <- t_test$p.value
   stat <- t_test$statistic
@@ -208,31 +208,31 @@ nonadj_level <- 0.05
 selected_nonadj <- t_stats %>% filter(p_val< nonadj_level)
 
 # plot histogram for the unadjusted z-values
-mean_z <- round(mean(t_stats$z_val),3) 
-sd_z <- round(sd(t_stats$z_val),3) 
+mean_z <- round(mean(t_stats$z_val), 3) 
+sd_z <- round(sd(t_stats$z_val), 3) 
 threshold_nonadj <- selected_nonadj %>% 
-  summarize(left = max(case_when(z_val > mean_z ~ -Inf,TRUE~ z_val)),
-            right = min(case_when(z_val < mean_z ~ +Inf,TRUE~ z_val)))
+  summarize(left = max(case_when(z_val > mean_z ~ -Inf, TRUE~ z_val)),
+            right = min(case_when(z_val < mean_z ~ +Inf, TRUE~ z_val)))
 
 hist_zval <- ggplot(data=t_stats) + 
   geom_histogram(
-    mapping = aes(x = z_val,after_stat(density)),
-    bins = 20, alpha = .7, fill='lightblue') +
-  geom_vline(mapping=aes(xintercept = threshold_nonadj$left),color= 'red')+    
-  geom_vline(mapping=aes(xintercept = threshold_nonadj$right),color= 'red')+
-  geom_line(mapping=aes(x = z_val,y = dnorm(z_val)),color='blue')+
+    mapping = aes(x = z_val, after_stat(density)),
+    bins = 20, alpha = .7, fill = 'lightblue') +
+  geom_vline(mapping = aes(xintercept = threshold_nonadj$left), color= 'red')+    
+  geom_vline(mapping = aes(xintercept = threshold_nonadj$right), color= 'red')+
+  geom_line(mapping = aes(x = z_val,y = dnorm(z_val)), color = 'blue')+
   labs(title = "multiple t-tests unadjusted",
        subtitle="histogram of corresponding z-values",
        x = "z-values",
-       y= "probability density")+
-  annotate(geom="text", x=-7, y=0.38, 
-           label=paste0("mean: ", mean_z,"\nstdev:", sd_z))+
+       y = "probability density")+
+  annotate(geom = "text", x = -7, y = 0.38, 
+           label = paste0("mean: ", mean_z, "\nstdev:", sd_z))+
   theme_bw()
 
 # signal histogram - current behaviour of p-values: uniform?
 hist_pval <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_val),
-                 fill = "firebrick", breaks = seq(0,1,.05),alpha=.7) +
+                 fill = "firebrick", breaks = seq(0,1,.05), alpha = .7) +
   labs(title = 'histogram of p-values') +
   theme_bw()
 
@@ -257,7 +257,7 @@ We will standardize the z values, recalculate the associated p-values and adjust
 t_stats <- t_stats %>%
   mutate(z_scale = (z_val - mean(z_val))/sd(z_val),
          p_scale = pnorm(z_scale),
-         p_adj = p.adjust(p_scale, method="fdr"))
+         p_adj = p.adjust(p_scale, method = "fdr"))
 
 # these are the detected genes and a histogram of their t-values
 fdr_level <- 0.1
@@ -265,22 +265,22 @@ selected_fdr <- t_stats %>% filter(p_adj < fdr_level)
 
 # plot histogram
 threshold_fdr <- selected_fdr %>% 
-  summarize(left = max(case_when(z_scale > 0~-Inf,TRUE~ z_scale)),
-            right = min(case_when(z_scale < 0~+Inf,TRUE~ z_scale)))
+  summarize(left = max(case_when(z_scale > 0~-Inf, TRUE~ z_scale)),
+            right = min(case_when(z_scale < 0~+Inf, TRUE~ z_scale)))
 
 hist_fdr <- ggplot(t_stats) + 
-  geom_histogram(mapping=aes(x = z_scale, after_stat(density)),
-                             fill="lightblue", bins = 20, alpha=.7)+
-  geom_vline(mapping=aes(xintercept=threshold_fdr$left),color='red') +    
-  geom_line(mapping = aes(x=z_scale, y= dnorm(z_scale)),color='blue') +
+  geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
+                             fill = "lightblue", bins = 20, alpha = .7) +
+  geom_vline(mapping = aes(xintercept = threshold_fdr$left), color = 'red') +    
+  geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)), color = 'blue') +
   labs(title = "multiple t-tests FDR",
-       caption = 'histogram of transformed z-values, rescaled and adjusted for multiple testing')+
+       caption = 'histogram of transformed z-values, rescaled and adjusted for multiple testing') +
   theme_bw()            
 
 # signal histogram - current behaviour of p-values: uniform?
 hist_pscale <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_scale),
-                 fill = "firebrick", breaks = seq(0,1,.05),alpha=.7) +
+                 fill = "firebrick", breaks = seq(0, 1, .05), alpha = .7) +
   labs(title = 'histogram of p-values') +
   theme_bw()
 
@@ -288,14 +288,14 @@ hist_pscale <- ggplot(data = t_stats) +
 pp_adj <- t_stats %>%
   ggplot(aes(x = p_scale,y = p_adj)) +
   geom_point(size = .3,color='blue') +
-  geom_segment(x=0,y=0,xend=1,yend=1) +
-  geom_hline(yintercept = fdr_level, color='red') +
+  geom_segment(x = 0, y = 0, xend = 1, yend = 1) +
+  geom_hline(yintercept = fdr_level, color = 'red') +
   labs(title = "Adjusting the p-values",
-       y= "adjusted p-value (BH, 1995)") +
+       y = "adjusted p-value (BH, 1995)") +
   theme_bw()
 
 # show histogram z-values +  monotonous adjustment for the p-values
-grid.arrange(hist_fdr, hist_pscale, pp_adj, ncol=3)
+grid.arrange(hist_fdr, hist_pscale, pp_adj, ncol = 3)
 
 # number of detected genes
 table_p_adj <- table(t_stats$p_adj < fdr_level)
@@ -313,7 +313,7 @@ We believe we can detect more differentiated genes using a local approach where 
 
 ```{r localfdr}
 #local fdr
-fdr_x <- locfdr(t_stats$z_val,plot=4) 
+fdr_x <- locfdr(t_stats$z_val, plot = 4) 
 prop_h0 <- fdr_x$fp0['mlest','p0']
 ```
 
@@ -322,17 +322,16 @@ The left plot shows the density of both populations. The proportion of different
 The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The height of the left FDR-graph is the FDR for all the genes with z-values smaller than the threshold shown on the x-axis.
 
 ```{r control_lfdr}
-
-FDR_left <- fdr_x$mat[,'Fdrleft']
-z_mat <- fdr_x$mat[,'x']
-lfdr_mat <- fdr_x$mat[,'fdr']
-dens1_mat <- fdr_x$mat[,'p1f1'] 
+FDR_left <- fdr_x$mat[, 'Fdrleft']
+z_mat <- fdr_x$mat[, 'x']
+lfdr_mat <- fdr_x$mat[, 'fdr']
+dens1_mat <- fdr_x$mat[, 'p1f1'] 
 
 id <- which.max(FDR_left[FDR_left < fdr_level])
 t_int <- (fdr_level - FDR_left[id])/(FDR_left[id+1] - FDR_left[id])
 threshold <- z_mat[id] * (1-t_int) + z_mat[id]*t_int 
 lfdr_level <- lfdr_mat[id] * (1-t_int) + lfdr_mat[id]*t_int
-cdf_true_positive = sum(dens1_mat[1:id])+ dens1_mat[id+1]* t_int
+cdf_true_positive = sum(dens1_mat[1:id]) + dens1_mat[id+1]* t_int
 prop_tp_r <- cdf_true_positive/sum(dens1_mat)
 ```
 
@@ -341,7 +340,6 @@ We want to control the FDR for 10%, for this we can find the value on the x-axis
 The third graph returns the probability that a non-null gene can be detected when the nominal local fdr is set at a given local fdr-level. The local fdr-level associated with an FDR of 10% is `r round(100* lfdr_level,1)`% which means that we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
 
 ```{r lfdr_genes}
-
 t_stats <- t_stats %>%
   mutate(
     lfdr = fdr_x$fdr,
@@ -351,13 +349,13 @@ t_stats <- t_stats %>%
                         labels = c('detected','H0 not rejected')))
 summ_lfdr <- t_stats %>%
   filter(lfdr < lfdr_level) %>%
-  summarize(nr_of_genes=n(), mean_lfdr=mean(lfdr))
+  summarize(nr_of_genes = n(), mean_lfdr = mean(lfdr))
 
 ggplot(t_stats) + 
-  scale_fill_manual(values=c("firebrick","lightblue")) +
-  geom_histogram(mapping=aes(x = stat, fill=isdetected_lfdr),
-                 bins = 20,alpha = .7)+
-  labs(title= 't-statistics for differentiated genes Local FDR')+
+  scale_fill_manual(values = c("firebrick", "lightblue")) +
+  geom_histogram(mapping = aes(x = stat, fill = isdetected_lfdr),
+                 bins = 20,alpha = .7) +
+  labs(title= 't-statistics for differentiated genes Local FDR') +
   theme_bw()       
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
 ```
@@ -478,7 +476,7 @@ ggplot(cvpcr_run1) +
   labs(title = 'cross validation PCR: steps of 10')+
   theme_bw() -> p1
 
-nr_pc_opt1 #largest AUC for this number of PC's
+nr_pc_opt1 # largest AUC for this number of PC's
 
 # zoom in: small steps(1) - same seed
 set.seed(42)
@@ -547,7 +545,7 @@ id_lambda_cv <- which(mCvLasso$lambda == lambda_cv)
 auc_lasso <- mCvLasso$cvm[id_lambda_cv]
 
 # Optimal model 
-mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", lambda = lambda_cv)
+mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family = "binomial", lambda = lambda_cv)
 #summary(coef(mLassoOpt))
 
 # with optimal lambda (largest auc) the output shows the non-zero estimated regression coefficients
@@ -566,19 +564,19 @@ The last model that we will fit on the training data is the Ridge regression mod
 
 ```{r, echo=FALSE, cache = TRUE, out.width="50%"}
 # Rigde regression
-mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
+mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family = "binomial")
 plot(mRidge, xvar = "lambda")
 
 # Rigde regression with cross-validation
 set.seed(44)
-mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure =               "auc", nfolds=K) # alp = 0 -> ridge
+mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure = "auc", nfolds = K) # alp = 0 -> ridge
 #plot(mCvRidge)
 
 # Ridge regression with optimal lambda
 rlambda_cv <- mCvRidge$lambda.min # optimal lambda
 id_rlambda_cv <- which(mCvRidge$lambda == rlambda_cv)
 auc_ridge <- mCvRidge$cvm[id_rlambda_cv]
-mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", lambda = rlambda_cv)
+mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family = "binomial", lambda = rlambda_cv)
 #summary(coef(mRidgeOpt))
 mCvRidge$lambda.min
 auc_ridge
@@ -598,7 +596,7 @@ testY <- Y[-trainset]
 library(plotROC)
 library(ggplot2)
 dfLassoOpt <- data.frame(
-  pred = predict(mCvLasso, s = lambda_cv, newx = as.matrix(testX), family="binomial", type = "response") %>% c(.),
+  pred = predict(mCvLasso, s = lambda_cv, newx = as.matrix(testX), family = "binomial", type = "response") %>% c(.),
   known.truth = testY)
 
 roc <-
@@ -635,8 +633,8 @@ calculate_misclass_error <- function(obs, pred, cutoff_values) {
     "misclass" = misclass_errors
   )
 }
-result <- calculate_misclass_error(testY, lasso_preds, seq(0.4,0.9,by=0.01))
-id <- which.min(result[,2])
+result <- calculate_misclass_error(testY, lasso_preds, seq(0.4, 0.9, by = 0.01))
+id <- which.min(result[, 2])
 cutoff <- result[id, 1]
 cutoff
 newY <- ifelse(lasso_preds > cutoff, 1, 0)  # everything bigger than cutoff -> predict 1
