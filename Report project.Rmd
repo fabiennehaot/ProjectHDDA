@@ -16,6 +16,7 @@ library(MASS)
 library(locfdr)
 library(boot)
 library(pROC)
+library(Rcpp)
 ```
 
 # Research Question
@@ -31,13 +32,13 @@ Data description in [@einecke:2010]
 data("Einecke2010Kidney")
 X_raw <- Einecke2010Kidney[, -1]
 Y <- factor(Einecke2010Kidney[, 1], 
-            levels = c(0,1),labels = c('accept','reject'))
+            levels = c(0,1),labels = c('accept', 'reject'))
 ```
 
 ## Exploration of the Data
-The data exploration is started by examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we look at possible outliers. The following plot illustrates that the data seem to be calibrates, close to centered but not scaled. Finally, no outliers were found.
+The data exploration is started by examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we look at possible outliers. The following plot illustrates that the data seem to be close to centered but not scaled. Finally, no outliers were found. The following plot illustrates this by the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values.
 
-```{r, echo=FALSE}
+```{r soundness checks, echo=FALSE }
 #missing values
 nr_values  <- sapply(X_raw, function(var) {length(var)})
 nr_missing <- sapply(X_raw, function(var) {length(which(is.na(var)))})
@@ -51,28 +52,22 @@ tb_summary <- tibble(Name= colnames(Einecke2010Kidney),
                      Nr = seq_along(Einecke2010Kidney),
                      MaxPerVar = max_per_var,
                      MinPerVar = min_per_var,
-                     MeanPerVar=mean_per_var)
-ggplot(data=tb_summary)+
-  geom_point(mapping=aes(x= Nr,y=MinPerVar),col='blue',size=.3)+
-  geom_point(mapping=aes(x= Nr,y=MeanPerVar),col='green',size=.3)+
-  geom_point(mapping=aes(x= Nr,y=MaxPerVar),col='red',size=.3)+
+                     MeanPerVar = mean_per_var)
+ggplot(data=tb_summary) +
+  geom_point(mapping = aes(x = Nr, y = MinPerVar), col = 'blue', size = .3)+
+  geom_point(mapping = aes(x = Nr, y = MeanPerVar), col = 'green', size = .3) +
+  geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3) +
+  ggtitle("Figure 1")
   theme_bw()
 
 X <- scale(X_raw)
 
 ```
-To get a better idea of the data, we plot the observations on the first two genes. Here, we don’t see a separation of kidney acceptance and therefore, in the next step we execute PCA to get more insight. 
 
-```{r}
-Einecke2010Kidney$rejection_fac <- as.factor(ifelse(Einecke2010Kidney$Reject_Status == 0, "Accepted", "Rejected"))
-ggplot(Einecke2010Kidney) +
-  geom_point(aes(X211352_s_at, X239275_at, col = rejection_fac)) +
-  ggtitle("Visualizing the data on the first 2 genes")
+A first look at the data does not provided a clear understanding on how kidney rejection is associated with the gene expression levels. Because the data is in a high dimensional setting, we opted for PCA to obtain a better understanding.
 
-```
-To get a better idea of the data, we plot the observations on the first two genes. Here, we don’t see a separation of kidney acceptance and therefore, in the next step we execute PCA to get more insight. 
 
-```{r pressure, echo=FALSE}
+```{r PCA, echo=FALSE}
 #PCA
 svd_x <- svd(X)
 Z <- svd_x$u %*% diag(svd_x$d) # Calculate the scores
@@ -80,30 +75,25 @@ V <- svd_x$v                 # Calculate the loadings
 pca_x <- prcomp(X, center = FALSE, scale. = FALSE)
 
 par(pch = 19, mfrow = c(1, 2))
-plot(svd_x$d, type = "b", ylab = "Singular values", xlab = "PCs")
-
 var_explained <- svd_x$d^2 / sum(svd_x$d^2)
 plot(var_explained,
      type = "b", ylab = "Percent variance explained", xlab = "PCs",
+     title = "Figure 2: ",
      col = 2
 )
-```
-The first 2 PC’s explain 19% of the variability of X and with the first 50 PC’s we obtain 63% of the variability of PC’s. 
 
-To get more insight in the research question, we examine whether kidney rejection is associated the first two PC’s, the following plot illustrates this. 
-```{r expl_plot2d}
 Scores <- X %*% svd_x$v
 tb_scores <- tibble(PCA1 = Scores[,1],
                     PCA2 = Scores[,2],
-                    Object=rownames(Scores),
+                    Object = rownames(Scores),
                     Rejected = as.factor(Y))
 
-p_scatter <- ggplot(tb_scores)+
-  geom_point(mapping=aes(x= PCA1,y=PCA2, col=Rejected))+
-  labs(title="Scores for 2 PC's")+
-  scale_color_manual(values= c('red','blue'))+
+ggplot(tb_scores) +
+  geom_point(mapping = aes(x = PCA1, y = PCA2, col = Rejected)) +
+  labs(title = "Figure 3: Scores for 2 PCA's") +
   theme_bw()  
 
+<<<<<<< HEAD
 p_dens <- ggplot(tb_scores)+
   geom_density(mapping=aes(x= PCA1+PCA2, fill=Rejected),
                alpha = 0.5)+
@@ -113,28 +103,26 @@ p_dens <- ggplot(tb_scores)+
 
 grid.arrange(p_scatter,p_dens,ncol=2)
 
+=======
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
 ```
+
+The first 2 PC’s explain 19% of the variability of X and with the first 50 PC’s we obtain 63% of the variability of PC’s. 
+
+To get more insight in the research question, we examine whether kidney rejection is associated the first two PC’s, the following plot illustrates this. 
+
 We see the PC’s do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in top right corner.
 
 Next, it is interesting to get more information on which genes are driving the PC’s. A lot of the PC’s are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
 
-```{r}
-V[1:20, 1]
-V[1:20, 2]
-
-
-
-```
-
-```{r}
+```{r loadings, echo=FALSE}
+par(pch = 19, mfrow = c(1, 2))
 hist(V[, 1], breaks = 50, xlab = "PC 1 loadings", main = "")
 abline(v = c(
   quantile(V[, 1], 0.05),
   quantile(V[, 1], 0.95)
 ), col = "red", lwd = 2)
-```
 
-```{r}
 hist(V[, 2], breaks = 50, xlab = "PC 2 loadings", main = "")
 abline(v = c(
   quantile(V[, 2], 0.05),
@@ -142,42 +130,26 @@ abline(v = c(
 ), col = "red", lwd = 2)
 
 ```
+
 The histograms confirm this which gives us a reason to believe that sparse PCA is worthwhile. 
 
-```{r}
+```{r sparce PCA, echo=FALSE}
+par(pch = 19, mfrow = c(1, 2))
 set.seed(45)
 fit_loadings1 <- cv.glmnet(X, Z[, 1],
                            alpha = 0.5, nfolds = 5)
 set.seed(45)
 fit_loadings2 <- cv.glmnet(X, Z[, 2], alpha = 0.5, nfolds = 5)
 
-par(mfrow = c(1, 1))
-plot(fit_loadings1$glmnet.fit, main = "PC1", xvar = "lambda")
-abline(v = log(fit_loadings1$lambda.min), lty = 3)
-abline(v = log(fit_loadings1$lambda.1se), lty = 3)
-plot(fit_loadings2$glmnet.fit, main = "PC2", xvar = "lambda")
-abline(v = log(fit_loadings2$lambda.min), lty = 3)
-abline(v = log(fit_loadings2$lambda.1se), lty = 3)
-```
-```{r}
-fit_loadings1
-fit_loadings2
-
-```
-
-```{r}
 sparse_loadings1 <- as.vector(coef(fit_loadings1, s = fit_loadings1$lambda.1se))
 sparse_loadings2 <- as.vector(coef(fit_loadings2, s = fit_loadings2$lambda.1se))
 ## How many non-zero loadings do we have (excluding the intercept)?
-(non_zero1 <- sum(abs(sparse_loadings1[-1]) > 0))
-(non_zero2 <- sum(abs(sparse_loadings2[-1]) > 0))
+non_zero1 <- sum(abs(sparse_loadings1[-1]) > 0)
+non_zero2 <- sum(abs(sparse_loadings2[-1]) > 0)
 
 SPC1 <- X %*% sparse_loadings1[-1] # without the intercept
 SPC2 <- X %*% sparse_loadings2[-1] # without the intercept
-```
-For both PC1 and PC2 around 200 genes are important.
 
-```{r}
 par(mfrow = c(1, 2))
 cols <- c("0" = "red", "1" = "blue")
 plot(Z[, 1], Z[, 2],
@@ -188,28 +160,25 @@ plot(SPC1, SPC2,
      col = cols[Y], xlab = "SPC1", ylab = "SPC2", pch = 16,
      main = paste(non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
 )
+
 ```
 
-We clearly can can see that with this subset of genes the same result can be obtained.
+For both PC1 and PC2 around 200 genes are important, which can provide more or less the same result as the PCA with all the genes.
 
-Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. When executing the LDA in R we achieved the warning that the variables are collinear, which is confirmed by the sparse PCA. 
-```{r, warning=FALSE}
+Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in the plots below.
+
+```{r LDA, warning=FALSE, echo=FALSE}
 kidney.lda <- MASS::lda(x = X, grouping = Y)
 Vlda <- kidney.lda$scaling
-colnames(Vlda) <- paste0("V",1:ncol(Vlda))
+colnames(Vlda) <- paste0("V", 1:ncol(Vlda))
 Zlda <- X%*%Vlda
-colnames(Zlda) <- paste0("Z",1:ncol(Zlda))
-par(mfrow = c(1, 1))
+colnames(Zlda) <- paste0("Z", 1:ncol(Zlda))
+par(mfrow = c(1, 2))
 boxplot(Zlda ~ Y, col = cols, ylab = expression("Z"[1]),
-        main = "Separation of accepted and rejected samples by LDA")
-```
-
-The LDA separates the accepted case (red) and the rejected case (blue) fairly well. However, it might be worthwhile to execute a sparse LDA due to the collinearity between thhe genes. The result of this is illustrated in the next figure.
-
-```{r}
+        main = "LDA with total set of genes")
 set.seed(45)
 lda_loadings <- cv.glmnet(X, Zlda, alpha = 0.5, nfolds = 5)
-plot(lda_loadings)
+
 
 sparse_lda_loadings <- as.vector(
   coef(lda_loadings, s = lda_loadings$lambda.1se)
@@ -221,10 +190,15 @@ SLDA <- X %*% sparse_lda_loadings[-1]
 n_nonzero <- sum(sparse_lda_loadings != 0)
 boxplot(SLDA ~ Y,
         col = cols, ylab = "SLDA",
-        main = sprintf("Subset of %d genes", n_nonzero)
+        main = sprintf("LDA with subset of %d genes", n_nonzero)
 )
 ```
+<<<<<<< HEAD
 We see that the accepted cases are situated just below 0 and the rejected cases around 1.
+=======
+
+Both the regular LDA (left) and the sparse LDQ separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
 
 ## Hypothesis Testing 
 Not every gene in the data set is an indicator for kidney rejection. In this section we find out which genes behave differently between the two kidney rejection groups. Since we do not know a priori whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances. 
@@ -238,7 +212,7 @@ We first perform these t-tests for every gene in the data, with an individual si
 gene_data <- as.matrix(X_raw)
 group <- Y
 # non adjusted p-values 
-ttest_results <- apply(gene_data, 2, function(x) {
+ttest_results <- apply(gene_data, 2, function(x){
   t_test <- t.test(x ~ group)
   tibble(stat = t_test$statistic, 
          p_val = t_test$p.value, 
@@ -256,14 +230,15 @@ nonadj_level <- 0.05
 selected_nonadj <- t_stats %>% filter(p_val< nonadj_level)
 
 # plot histogram for the unadjusted z-values
-mean_z <- round(mean(t_stats$z_val),3) 
-sd_z <- round(sd(t_stats$z_val),3) 
+mean_z <- round(mean(t_stats$z_val), 3) 
+sd_z <- round(sd(t_stats$z_val), 3) 
 threshold_nonadj <- selected_nonadj %>% 
-  summarize(left = max(case_when(z_val > mean_z ~ -Inf,TRUE~ z_val)),
-            right = min(case_when(z_val < mean_z ~ +Inf,TRUE~ z_val)))
+  summarize(left = max(case_when(z_val > mean_z ~ -Inf, TRUE~ z_val)),
+            right = min(case_when(z_val < mean_z ~ +Inf, TRUE~ z_val)))
 
 hist_zval <- ggplot(data=t_stats) + 
   geom_histogram(
+<<<<<<< HEAD
     mapping = aes(x = z_val,after_stat(density)),
     bins = 20, alpha = .7, fill='lightblue') +
   geom_vline(mapping=aes(xintercept = threshold_nonadj$left),
@@ -275,13 +250,31 @@ hist_zval <- ggplot(data=t_stats) +
   labs(title = "Histogram of z-values", x = "z-value", y= "density")+
   annotate(geom="text", x=-7, y=0.38, 
            label=paste0(" mean: ", mean_z,"\nstdev: ", sd_z))+
+=======
+    mapping = aes(x = z_val, after_stat(density)),
+    bins = 20, alpha = .7, fill = 'lightblue') +
+  geom_vline(mapping = aes(xintercept = threshold_nonadj$left), color= 'red')+    
+  geom_vline(mapping = aes(xintercept = threshold_nonadj$right), color= 'red')+
+  geom_line(mapping = aes(x = z_val,y = dnorm(z_val)), color = 'blue')+
+  labs(title = "multiple t-tests unadjusted",
+       subtitle="histogram of corresponding z-values",
+       x = "z-values",
+       y = "probability density")+
+  annotate(geom = "text", x = -7, y = 0.38, 
+           label = paste0("mean: ", mean_z, "\nstdev:", sd_z))+
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
   theme_bw()
 
 # signal histogram - current behaviour of p-values: uniform?
 hist_pval <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_val),
+<<<<<<< HEAD
                  fill = "firebrick", bins = 20, alpha=.7) +
   labs(title = 'Histogram of p-values', x = "p-value") +
+=======
+                 fill = "firebrick", breaks = seq(0,1,.05), alpha = .7) +
+  labs(title = 'histogram of p-values') +
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
   theme_bw()
 
 grid.arrange(hist_zval, hist_pval, ncol=2,
@@ -303,7 +296,7 @@ We will standardize the z values, recalculate the associated p-values and adjust
 t_stats <- t_stats %>%
   mutate(z_scale = (z_val - mean(z_val))/sd(z_val),
          p_scale = pnorm(z_scale),
-         p_adj = p.adjust(p_scale, method="fdr"))
+         p_adj = p.adjust(p_scale, method = "fdr"))
 
 # these are the detected genes and a histogram of their t-values
 fdr_level <- 0.1
@@ -311,10 +304,11 @@ selected_fdr <- t_stats %>% filter(p_adj < fdr_level)
 
 # plot histogram
 threshold_fdr <- selected_fdr %>% 
-  summarize(left = max(case_when(z_scale > 0~-Inf,TRUE~ z_scale)),
-            right = min(case_when(z_scale < 0~+Inf,TRUE~ z_scale)))
+  summarize(left = max(case_when(z_scale > 0~-Inf, TRUE~ z_scale)),
+            right = min(case_when(z_scale < 0~+Inf, TRUE~ z_scale)))
 
 hist_fdr <- ggplot(t_stats) + 
+<<<<<<< HEAD
   geom_histogram(mapping=aes(x = z_scale, after_stat(density)),
                              fill="lightblue", bins = 20, alpha=.7)+
   geom_vline(mapping=aes(xintercept=threshold_fdr$left),
@@ -322,28 +316,49 @@ hist_fdr <- ggplot(t_stats) +
   geom_line(mapping = aes(x=z_scale, y= dnorm(z_scale)),
             color='blue') +
   labs(title = 'Histogram of z-values') +
+=======
+  geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
+                             fill = "lightblue", bins = 20, alpha = .7) +
+  geom_vline(mapping = aes(xintercept = threshold_fdr$left), color = 'red') +    
+  geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)), color = 'blue') +
+  labs(title = "multiple t-tests FDR",
+       caption = 'histogram of transformed z-values, rescaled and adjusted for multiple testing') +
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
   theme_bw()            
 
 # signal histogram - current behaviour of p-values: uniform?
 hist_pscale <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_scale),
+<<<<<<< HEAD
                  fill = "firebrick", bins = 20, alpha=.7) +
   labs(title = 'Histogram of p-values') +
+=======
+                 fill = "firebrick", breaks = seq(0, 1, .05), alpha = .7) +
+  labs(title = 'histogram of p-values') +
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
   theme_bw()
 
 # monotonous transformation:
 pp_adj <- t_stats %>%
   ggplot(aes(x = p_scale,y = p_adj)) +
   geom_point(size = .3,color='blue') +
-  geom_segment(x=0,y=0,xend=1,yend=1) +
-  geom_hline(yintercept = fdr_level, color='red') +
+  geom_segment(x = 0, y = 0, xend = 1, yend = 1) +
+  geom_hline(yintercept = fdr_level, color = 'red') +
   labs(title = "Adjusting the p-values",
+<<<<<<< HEAD
        y= "adjusted p-value") +
   theme_bw()
 
 # show histogram z-values +  monotonous adjustment for the p-values
 grid.arrange(hist_fdr, hist_pscale, pp_adj, ncol=3,
              top  = "Multiple t-tests: scaling and FDR-adjustment")
+=======
+       y = "adjusted p-value (BH, 1995)") +
+  theme_bw()
+
+# show histogram z-values +  monotonous adjustment for the p-values
+grid.arrange(hist_fdr, hist_pscale, pp_adj, ncol = 3)
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
 
 # number of detected genes
 table_p_adj <- table(t_stats$p_adj < fdr_level)
@@ -359,20 +374,34 @@ We believe we can detect more differentiated genes using a local approach where 
 
 ```{r localfdr, echo = FALSE, fig.height=4}
 #local fdr
-fdr_x <- locfdr(t_stats$z_val,plot=4) 
+fdr_x <- locfdr(t_stats$z_val, plot = 4) 
 prop_h0 <- fdr_x$fp0['mlest','p0']
+<<<<<<< HEAD
 
 #control FDR for 10%
 FDR_left <- fdr_x$mat[,'Fdrleft']
 z_mat <- fdr_x$mat[,'x']
 lfdr_mat <- fdr_x$mat[,'fdr']
 dens1_mat <- fdr_x$mat[,'p1f1'] 
+=======
+```
+
+The left plot shows the density of both populations. The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`%. This means `r round(10000*(1 - prop_h0),0)` genes for our data set. We do not expect to find signal genes in the right tail. 
+
+The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The height of the left FDR-graph is the FDR for all the genes with z-values smaller than the threshold shown on the x-axis.
+
+```{r control_lfdr}
+FDR_left <- fdr_x$mat[, 'Fdrleft']
+z_mat <- fdr_x$mat[, 'x']
+lfdr_mat <- fdr_x$mat[, 'fdr']
+dens1_mat <- fdr_x$mat[, 'p1f1'] 
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
 
 id <- which.max(FDR_left[FDR_left < fdr_level])
 t_int <- (fdr_level - FDR_left[id])/(FDR_left[id+1] - FDR_left[id])
 threshold <- z_mat[id] * (1-t_int) + z_mat[id]*t_int 
 lfdr_level <- lfdr_mat[id] * (1-t_int) + lfdr_mat[id]*t_int
-cdf_true_positive = sum(dens1_mat[1:id])+ dens1_mat[id+1]* t_int
+cdf_true_positive = sum(dens1_mat[1:id]) + dens1_mat[id+1]* t_int
 prop_tp_r <- cdf_true_positive/sum(dens1_mat)
 ```
 
@@ -381,8 +410,12 @@ The second plot shows the local false discovery rate. Since we want to control t
 We want to control the FDR for 10%, for this we can find the value on the x-axis for which the left FDR - graph is equal to 10% (or calculate the threshold using interpolation), the threshold for the z-values becomes `r round(threshold,3)`.  
 The third graph returns the probability that a non-null gene can be detected when the nominal local fdr is set at a given local fdr-level. The local fdr-level associated with an FDR of 10% is `r round(100* lfdr_level,1)`% which means that we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
 
+<<<<<<< HEAD
 ```{r lfdr_genes, echo = FALSE, fig.height = 4}
 
+=======
+```{r lfdr_genes}
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
 t_stats <- t_stats %>%
   mutate(
     lfdr = fdr_x$fdr,
@@ -392,8 +425,9 @@ t_stats <- t_stats %>%
                         labels = c('detected','H0 not rejected')))
 summ_lfdr <- t_stats %>%
   filter(lfdr < lfdr_level) %>%
-  summarize(nr_of_genes=n(), mean_lfdr=mean(lfdr))
+  summarize(nr_of_genes = n(), mean_lfdr = mean(lfdr))
 
+<<<<<<< HEAD
 data_lfdr <- as_tibble(fdr_x$mat)
 plot_lfdr <- ggplot(data_lfdr) + 
   geom_col(mapping=aes(x = x, y=counts/sum(counts)),
@@ -402,6 +436,13 @@ plot_lfdr <- ggplot(data_lfdr) +
   geom_line(mapping= aes(x=x,y=f0/sum(f0)),
             col='blue')+
   labs(x = 'z-value', y= 'density')+
+=======
+ggplot(t_stats) + 
+  scale_fill_manual(values = c("firebrick", "lightblue")) +
+  geom_histogram(mapping = aes(x = stat, fill = isdetected_lfdr),
+                 bins = 20,alpha = .7) +
+  labs(title= 't-statistics for differentiated genes Local FDR') +
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
   theme_bw()       
 
 grid.arrange(plot_lfdr,top="Multiple t-tests: Local FDR")
@@ -443,7 +484,7 @@ Here, we will evaluate three prediction models: principal component regression (
 
 # Principal compentent regression (PCR)
 
-```{r PCR}
+```{r PCR, include=FALSE}
 # Calculate PCA and extract scores
 pca_X <- prcomp(trainX)
 Z <- pca_X$x
@@ -454,81 +495,109 @@ n_PC
 ```
 First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PC's are available.
 
-```{r fullPCR, cache=TRUE}
+```{r fullPCR, include = FALSE, warning = FALSE}
 fit_data <- data.frame(trainY, Z)
 
-## Example of PC Log. Reg. with all PCs
+## Logistic regression with all the PC's
 full_model <- suppressMessages(glm(trainY ~ ., data = fit_data, family = "binomial"))
 
-set.seed(1234)
+set.seed(42)
 full_model_cv <- suppressMessages(cv.glm(
   data = fit_data,  glmfit = full_model,
-  cost = auc, K = 10  # note: specify the auc function (from pROC) without`()`!
+  cost = auc, K = 9  
 ))
 
-## We'll just use the raw one here
-full_model_cv$delta[1] # This is the AUC for this particular model estimated by AUC
+full_model_cv$delta[1] 
 ```
-First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into (hoeveel we er kiezen) approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
+First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
 
-```{r eachPC, cache=TRUE}
-## Now we'll wrap this code in a for-loop and repeat for each number of PCs
-cv_auc <- vector("numeric", length = n_PC)
-set.seed(1234) # seed for reproducibility
-for (i in seq_len(n_PC)) {
-  ## Prepare fit_data; subset number of PCs to i
-  fit_data <- data.frame(trainY, Z[, 1:i, drop = FALSE])  # use drop = FALSE to avoid problems when subsetting single column
-  pcr_mod <- suppressMessages(
-    glm(trainY ~ ., data = fit_data, family = "binomial")
-  )
-  
-  ## Do 4-fold CV while suppressing Warnings and Messages
-  cv <- suppressMessages(
-      cv.glm(fit_data, pcr_mod, cost = pROC::auc, K = 4)
-            )
-  cv_auc[i] <- cv$delta[1]
+```{r eachPC, echo = FALSE, warning = FALSE}
+auc_cv_glm <- function(trials, data, folds){
+  full_model <- suppressWarnings(glm(Y ~ ., data = data, family = "binomial"))
+  n_trials <- length(trials)
+  error_auc <- rep(0, n_trials)
+  comp <- 1
+  for (k_try in trials){
+    full_model_cv <- suppressWarnings(suppressMessages(
+      cv.glm(
+        data = data[1:(k_try+1)],  
+        glmfit = full_model,
+        cost = pROC::auc, 
+        K = folds # note: specify the auc function (from pROC) without`()`!
+      )))
+    error_auc[comp] = full_model_cv$delta[1] 
+    comp <- comp + 1
+  }
+  df_auc <- tibble(auc = error_auc, nr_of_pc = trials)
 }
 
-#als ik hier een k=10 gebruik, krijg ik de Error in roc.default(response, predictor, auc = TRUE, ...) : 'response' must have two levels
+# model PCR for the first k principal components
+pca_x <- prcomp(trainX)
+Z <- pca_x$x
+fit_data <- data.frame(Y = trainY, Z)
 
-names(cv_auc) <- seq_along(cv_auc) 
+# 9-fold Cross-validation on this one particular model, using AUC
+# 2 step-procedure to detect k: big steps (10) first
+set.seed(42)
+trials <- seq(1, nrow(fit_data), 10)
+folds <- 9
+cvpcr_run1 <- auc_cv_glm(trials, fit_data, folds)
+nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc
+ggplot(cvpcr_run1) +
+  geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue') +
+  geom_vline(mapping = aes(xintercept = nr_pc_opt1),col = 'firebrick')+
+  labs(title = 'cross validation PCR: steps of 10')+
+  theme_bw() -> p1
 
-cv_auc
+nr_pc_opt1 # largest AUC for this number of PC's
 
-## Finding the optimal nr. of PCs corresponds to finding the max. AUC
-optim_nPC <- names(which.max(cv_auc))
-optim_nPC
-cv_auc[optim_nPC]
+# zoom in: small steps(1) - same seed
+set.seed(42)
+trials <- seq(1, 20)
+folds <- 9
+cvpcr_run2 <- auc_cv_glm(trials, fit_data, folds)
+nr_pc_opt2 <- cvpcr_run2 %>% filter(auc == max(auc)) %>% .$nr_of_pc
+ggplot(cvpcr_run2) +
+  geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue')+
+  geom_vline(mapping = aes(xintercept = nr_pc_opt2), col = 'firebrick')+
+  labs(title ='cross validation PCR: steps of 1') +
+  theme_bw() -> p2
 
-plot(names(cv_auc), cv_auc, xlab = "n PCs", ylab = "AUC", type = "l")
-abline(v = optim_nPC, col = "red")
+nr_pc_opt2 #largest AUC for this number of PC's
+
+grid.arrange(p1, p2, ncol = 2) # plot the 2 plots next to each other
+
 ```
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PC's, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PC's. To get a more accurate look, we zoom in between 1 and 20 PC's and repeat the same process, but wit steps of 1. This gives us an optimal number of PC's of `r nr_pc_opt2`.
 
-In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of `r optim_nPC`, which corresponds to an AUC of `cv_auc[optim_nPC]`.
-
-```{r PCRfinal, cache=TRUE}
-
+```{r PCRfinal, echo = FALSE, warning = FALSE}
 pca <- prcomp(trainX)
-Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
-Zk <- pca$x[, 1:optim_nPC]
-
+Vk <- pca$rotation[, 1:nr_pc_opt2] # the loadings matrix
+Zk <- pca$x[, 1:nr_pc_opt2]
 pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 summary(pcr_model1)
-suppressMessages(plot(pcr_model1, plottype = "validation"))
 
 pcr_train = tibble(pcr_score = pcr_model1$fitted.values, 
                    rejection = trainY)
+<<<<<<< HEAD
 p_dens_pcr <- ggplot(pcr_train)+
   geom_density(mapping=aes(x= pcr_score, fill=rejection), 
                alpha = 0.5)+
   labs(title="Density for 2 PC's: densities")+
   scale_fill_manual(values=c('firebrick','lightblue'))+
+=======
+
+p_dens_pcr <- ggplot(pcr_train) +
+  geom_density(mapping = aes(x = pcr_score, fill = rejection), alpha = 0.5)+
+  labs(title = "Density for 2 PC's: densities") +
+  scale_fill_manual(values = c('red','blue')) +
+>>>>>>> 8a5870e9576e358d3b06e9ff855fc12feb7c755c
   theme_bw() 
+
 p_dens_pcr
 ```
-
-
-In the last step, a principle component egression model with `r optim_nPC` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
+In the last step, a principle component regression model with `r nr_pc_opt2` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
+When we plot the two densities of the accepted and rejected kidneys with this model, we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
 # Lasso regression
 
@@ -557,7 +626,7 @@ id_lambda_cv <- which(mCvLasso$lambda == lambda_cv)
 auc_lasso <- mCvLasso$cvm[id_lambda_cv]
 
 # Optimal model 
-mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", lambda = lambda_cv)
+mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family = "binomial", lambda = lambda_cv)
 #summary(coef(mLassoOpt))
 
 # with optimal lambda (largest auc) the output shows the non-zero estimated regression coefficients
@@ -576,19 +645,19 @@ The last model that we will fit on the training data is the Ridge regression mod
 
 ```{r, echo=FALSE, cache = TRUE, out.width="50%"}
 # Rigde regression
-mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
+mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family = "binomial")
 plot(mRidge, xvar = "lambda")
 
 # Rigde regression with cross-validation
 set.seed(44)
-mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure =               "auc", nfolds=K) # alp = 0 -> ridge
+mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure = "auc", nfolds = K) # alp = 0 -> ridge
 #plot(mCvRidge)
 
 # Ridge regression with optimal lambda
 rlambda_cv <- mCvRidge$lambda.min # optimal lambda
 id_rlambda_cv <- which(mCvRidge$lambda == rlambda_cv)
 auc_ridge <- mCvRidge$cvm[id_rlambda_cv]
-mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", lambda = rlambda_cv)
+mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family = "binomial", lambda = rlambda_cv)
 #summary(coef(mRidgeOpt))
 mCvRidge$lambda.min
 auc_ridge
@@ -608,7 +677,7 @@ testY <- Y[-trainset]
 library(plotROC)
 library(ggplot2)
 dfLassoOpt <- data.frame(
-  pred = predict(mCvLasso, s = lambda_cv, newx = as.matrix(testX), family="binomial", type = "response") %>% c(.),
+  pred = predict(mCvLasso, s = lambda_cv, newx = as.matrix(testX), family = "binomial", type = "response") %>% c(.),
   known.truth = testY)
 
 roc <-
@@ -645,8 +714,8 @@ calculate_misclass_error <- function(obs, pred, cutoff_values) {
     "misclass" = misclass_errors
   )
 }
-result <- calculate_misclass_error(testY, lasso_preds, seq(0.4,0.9,by=0.01))
-id <- which.min(result[,2])
+result <- calculate_misclass_error(testY, lasso_preds, seq(0.4, 0.9, by = 0.01))
+id <- which.min(result[, 2])
 cutoff <- result[id, 1]
 cutoff
 newY <- ifelse(lasso_preds > cutoff, 1, 0)  # everything bigger than cutoff -> predict 1
