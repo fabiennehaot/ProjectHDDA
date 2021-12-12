@@ -77,6 +77,7 @@ par(pch = 19, mfrow = c(1, 2))
 var_explained <- svd_x$d^2 / sum(svd_x$d^2)
 plot(var_explained,
      type = "b", ylab = "Percent variance explained", xlab = "PCs",
+     title = "Figure 2: ")
      col = 2
 )
 
@@ -88,7 +89,7 @@ tb_scores <- tibble(PCA1 = Scores[,1],
 
 ggplot(tb_scores) +
   geom_point(mapping = aes(x = PCA1, y = PCA2, col = Rejected)) +
-  labs(title = "Figure 2: Scores for 2 PCA's") +
+  labs(title = "Figure 3: Scores for 2 PCA's") +
   theme_bw()  
 
 ```
