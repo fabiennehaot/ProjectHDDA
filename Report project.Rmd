@@ -31,7 +31,7 @@ Data description in [@einecke:2010]
 data("Einecke2010Kidney")
 X_raw <- Einecke2010Kidney[, -1]
 Y <- factor(Einecke2010Kidney[, 1], 
-            levels = c(0,1),labels = c('accept','reject'))
+            levels = c(0,1), labels = c('accept', 'reject'))
 ```
 
 ## Exploration of the Data
@@ -51,7 +51,7 @@ tb_summary <- tibble(Name= colnames(Einecke2010Kidney),
                      Nr = seq_along(Einecke2010Kidney),
                      MaxPerVar = max_per_var,
                      MinPerVar = min_per_var,
-                     MeanPerVar=mean_per_var)
+                     MeanPerVar = mean_per_var)
 ggplot(data=tb_summary)+
   geom_point(mapping=aes(x= Nr,y=MinPerVar),col='blue',size=.3)+
   geom_point(mapping=aes(x= Nr,y=MeanPerVar),col='green',size=.3)+
@@ -443,7 +443,7 @@ Here, we will evaluate three prediction models: principal component regression (
 
 # Principal compentent regression (PCR)
 
-```{r PCR}
+```{r PCR, include=FALSE}
 # Calculate PCA and extract scores
 pca_X <- prcomp(trainX)
 Z <- pca_X$x
@@ -454,81 +454,101 @@ n_PC
 ```
 First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PC's are available.
 
-```{r fullPCR, cache=TRUE}
+```{r fullPCR, include = FALSE, warning = FALSE}
 fit_data <- data.frame(trainY, Z)
 
-## Example of PC Log. Reg. with all PCs
+## Logistic regression with all the PC's
 full_model <- suppressMessages(glm(trainY ~ ., data = fit_data, family = "binomial"))
 
-set.seed(1234)
+set.seed(42)
 full_model_cv <- suppressMessages(cv.glm(
   data = fit_data,  glmfit = full_model,
-  cost = auc, K = 10  # note: specify the auc function (from pROC) without`()`!
+  cost = auc, K = 9  
 ))
 
-## We'll just use the raw one here
-full_model_cv$delta[1] # This is the AUC for this particular model estimated by AUC
+full_model_cv$delta[1] 
 ```
-First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into (hoeveel we er kiezen) approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
+First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
 
-```{r eachPC, cache=TRUE}
-## Now we'll wrap this code in a for-loop and repeat for each number of PCs
-cv_auc <- vector("numeric", length = n_PC)
-set.seed(1234) # seed for reproducibility
-for (i in seq_len(n_PC)) {
-  ## Prepare fit_data; subset number of PCs to i
-  fit_data <- data.frame(trainY, Z[, 1:i, drop = FALSE])  # use drop = FALSE to avoid problems when subsetting single column
-  pcr_mod <- suppressMessages(
-    glm(trainY ~ ., data = fit_data, family = "binomial")
-  )
-  
-  ## Do 4-fold CV while suppressing Warnings and Messages
-  cv <- suppressMessages(
-      cv.glm(fit_data, pcr_mod, cost = pROC::auc, K = 4)
-            )
-  cv_auc[i] <- cv$delta[1]
+```{r eachPC, echo = FALSE, warning = FALSE}
+auc_cv_glm <- function(trials, data, folds){
+  full_model <- suppressWarnings(glm(Y ~ ., data = data, family = "binomial"))
+  n_trials <- length(trials)
+  error_auc <- rep(0, n_trials)
+  comp <- 1
+  for (k_try in trials){
+    full_model_cv <- suppressWarnings(suppressMessages(
+      cv.glm(
+        data = data[1:(k_try+1)],  
+        glmfit = full_model,
+        cost = pROC::auc, 
+        K = folds # note: specify the auc function (from pROC) without`()`!
+      )))
+    error_auc[comp] = full_model_cv$delta[1] 
+    comp <- comp + 1
+  }
+  df_auc <- tibble(auc = error_auc, nr_of_pc = trials)
 }
 
-#als ik hier een k=10 gebruik, krijg ik de Error in roc.default(response, predictor, auc = TRUE, ...) : 'response' must have two levels
+# model PCR for the first k principal components
+pca_x <- prcomp(trainX)
+Z <- pca_x$x
+fit_data <- data.frame(Y = trainY, Z)
 
-names(cv_auc) <- seq_along(cv_auc) 
+# 9-fold Cross-validation on this one particular model, using AUC
+# 2 step-procedure to detect k: big steps (10) first
+set.seed(42)
+trials <- seq(1, nrow(fit_data), 10)
+folds <- 9
+cvpcr_run1 <- auc_cv_glm(trials, fit_data, folds)
+nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc
+ggplot(cvpcr_run1) +
+  geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue') +
+  geom_vline(mapping = aes(xintercept = nr_pc_opt1),col = 'firebrick')+
+  labs(title = 'cross validation PCR: steps of 10')+
+  theme_bw() -> p1
 
-cv_auc
+nr_pc_opt1 # largest AUC for this number of PC's
 
-## Finding the optimal nr. of PCs corresponds to finding the max. AUC
-optim_nPC <- names(which.max(cv_auc))
-optim_nPC
-cv_auc[optim_nPC]
+# zoom in: small steps(1) - same seed
+set.seed(42)
+trials <- seq(1, 20)
+folds <- 9
+cvpcr_run2 <- auc_cv_glm(trials, fit_data, folds)
+nr_pc_opt2 <- cvpcr_run2 %>% filter(auc == max(auc)) %>% .$nr_of_pc
+ggplot(cvpcr_run2) +
+  geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue')+
+  geom_vline(mapping = aes(xintercept = nr_pc_opt2), col = 'firebrick')+
+  labs(title ='cross validation PCR: steps of 1') +
+  theme_bw() -> p2
 
-plot(names(cv_auc), cv_auc, xlab = "n PCs", ylab = "AUC", type = "l")
-abline(v = optim_nPC, col = "red")
+nr_pc_opt2 #largest AUC for this number of PC's
+
+grid.arrange(p1, p2, ncol = 2) # plot the 2 plots next to each other
+
 ```
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PC's, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PC's. To get a more accurate look, we zoom in between 1 and 20 PC's and repeat the same process, but wit steps of 1. This gives us an optimal number of PC's of `r nr_pc_opt2`.
 
-In a second step, we loop and repeat this for each PC. This gives us the optimal number of PC's of `r optim_nPC`, which corresponds to an AUC of `cv_auc[optim_nPC]`.
-
-```{r PCRfinal, cache=TRUE}
-
+```{r PCRfinal, echo = FALSE, warning = FALSE}
 pca <- prcomp(trainX)
-Vk <- pca$rotation[, 1:optim_nPC] # the loadings matrix
-Zk <- pca$x[, 1:optim_nPC]
-
+Vk <- pca$rotation[, 1:nr_pc_opt2] # the loadings matrix
+Zk <- pca$x[, 1:nr_pc_opt2]
 pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 summary(pcr_model1)
-suppressMessages(plot(pcr_model1, plottype = "validation"))
 
 pcr_train = tibble(pcr_score = pcr_model1$fitted.values, 
                    rejection = trainY)
-p_dens_pcr <- ggplot(pcr_train)+
-  geom_density(mapping=aes(x= pcr_score, fill=rejection), 
-               alpha = 0.5)+
-  labs(title="Density for 2 PC's: densities")+
-  scale_fill_manual(values=c('firebrick','lightblue'))+
+
+p_dens_pcr <- ggplot(pcr_train) +
+  geom_density(mapping = aes(x = pcr_score, fill = rejection), alpha = 0.5)+
+  labs(title = "Density for 2 PC's: densities") +
+  scale_fill_manual(values = c('red','blue')) +
   theme_bw() 
+
 p_dens_pcr
 ```
-
-
-In the last step, a principle component egression model with `r optim_nPC` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
+In the last step, a principle component regression model with `r nr_pc_opt2` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
+When we plot the two densities of the accepted and rejected kidneys with this model, we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
 # Lasso regression
 
