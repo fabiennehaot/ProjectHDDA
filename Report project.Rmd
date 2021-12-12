@@ -91,17 +91,27 @@ plot(var_explained,
 The first 2 PC’s explain 19% of the variability of X and with the first 50 PC’s we obtain 63% of the variability of PC’s. 
 
 To get more insight in the research question, we examine whether kidney rejection is associated the first two PC’s, the following plot illustrates this. 
-```{r}
+```{r expl_plot2d}
 Scores <- X %*% svd_x$v
 tb_scores <- tibble(PCA1 = Scores[,1],
                     PCA2 = Scores[,2],
                     Object=rownames(Scores),
                     Rejected = as.factor(Y))
 
-ggplot(tb_scores)+
+p_scatter <- ggplot(tb_scores)+
   geom_point(mapping=aes(x= PCA1,y=PCA2, col=Rejected))+
-  labs(title="Scores for 2 PCA's")+
+  labs(title="Scores for 2 PC's")+
+  scale_color_manual(values= c('red','blue'))+
   theme_bw()  
+
+p_dens <- ggplot(tb_scores)+
+  geom_density(mapping=aes(x= PCA1+PCA2, fill=Rejected), alpha = 0.5)+
+  labs(title="Density for 2 PC's: densities")+
+  scale_fill_manual(values=c('red','blue'))+
+  theme_bw()  
+
+grid.arrange(p_scatter,p_dens,ncol=2)
+
 ```
 We see the PC’s do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in top right corner.
 
@@ -417,7 +427,7 @@ The genes detected by the local fdr will be added as an appendix.
 ## Model Selection
 In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a train (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model.
 
-```{r training and test data}
+```{r training_and_test_data, include = FALSE}
 set.seed(1234)
 trainset <- sample(nrow(X_raw), 0.7*nrow(X_raw))
 trainX <- X_raw[trainset, ]
