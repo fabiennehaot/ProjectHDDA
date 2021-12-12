@@ -56,7 +56,7 @@ ggplot(data=tb_summary) +
   geom_point(mapping = aes(x = Nr, y = MinPerVar), col = 'blue', size = .3)+
   geom_point(mapping = aes(x = Nr, y = MeanPerVar), col = 'green', size = .3) +
   geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3) +
-  ggtitl("Figure 1")
+  ggtitle("Figure 1")
   theme_bw()
 
 X <- scale(X_raw)
