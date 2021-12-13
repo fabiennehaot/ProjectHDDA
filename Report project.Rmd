@@ -446,7 +446,7 @@ full_model_cv <- suppressMessages(cv.glm(
 
 full_model_cv$delta[1] 
 ```
-First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. This means we will have overfitting, as the model will predict the training dataset exactly, but this will not be reproducible to other (or the test) dataset. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`.
+First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we used all PCs, we got a warning because we are overfitting the data.
 
 ```{r eachPC, echo = FALSE, warning = FALSE}
 auc_cv_glm <- function(trials, data, folds){
