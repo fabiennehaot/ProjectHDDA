@@ -33,7 +33,7 @@ We investigated the claim that some genes are responsible for a patient’s like
 ## Data
 
 Data description in [@einecke:2010]
-```{r getdata}
+```{r getdata, include = FALSE}
 data("Einecke2010Kidney")
 X_raw <- Einecke2010Kidney[, -1]
 Y <- factor(Einecke2010Kidney[, 1], 
