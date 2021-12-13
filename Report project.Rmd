@@ -156,9 +156,10 @@ plot(Z[, 1], Z[, 2],
      col = cols[Y], xlab = "PC1", ylab = "PC2", pch = 16,
      main = "Figure 6:All genes \nfor PC1 and PC2"
 )
+
 plot(SPC1, SPC2,
      col = cols[Y], xlab = "SPC1", ylab = "SPC2", pch = 16,
-     main = "Figure 6:" paste(non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
+     main = paste("Figure 6:", non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
 )
 
 ```
