@@ -390,7 +390,7 @@ lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
 We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. The mean of the local fdr for the detected genes in the data set is `r round(100*summ_lfdr$mean_lfdr,1)`%, we expect to have `r round(summ_lfdr$mean_lfdr* summ_lfdr$nr_of_genes)` to `r round(fdr_level* summ_lfdr$nr_of_genes)` falsely detected genes. The genes detected by the local fdr will be added as an appendix.  
 
 ## Model Selection
-In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a train (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model.
+In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a train (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model. We will center and scale the training set. Afterwards, the same scale and translation factor are applied on the test set.
 
 ```{r training_and_test_data, include = FALSE}
 set.seed(1234)
