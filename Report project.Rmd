@@ -17,6 +17,11 @@ library(locfdr)
 library(boot)
 library(pROC)
 library(Rcpp)
+#BiocManager::install("plotROC")
+library(plotROC)
+library(ggplot2)
+library(gridExtra)
+library(grid)
 ```
 
 # Research Question
@@ -525,10 +530,10 @@ When we plot the two densities of the accepted and rejected kidneys with this mo
 
 # Lasso regression
 
-We are now going to use two penalised (logistic) regression models. We start with Lasso regression that uses the $L_1$-norm. We will again only use the training set to fit the model. The following figure nicely shows that when the penality parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
+We are now going to use two penalised (logistic) regression models. We start with Lasso regression that uses the $L_1$-norm. We will again only use the training set to fit the model. The following figure nicely shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
 
 
-```{r, echo=FALSE,fig.show="hold", out.width="50%"}
+```{r Lasso, echo=FALSE,fig.show="hold", out.width="50%"}
 # Lasso
 mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial")  # alpha = 1 -> Lasso
 plot(mLasso, xvar = "lambda")
@@ -539,18 +544,19 @@ K <- 10 #number of folds
 mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", type.measure = "auc", nfolds = K)
 plot(mCvLasso)
 ```
-To make a decision about $\lambda$, we will use cross-validation on the training data set. We use 10-fold cross-validation because our dataset is quite small, so it should not take too much time. We optimize the area under the receiver characteristic curve (AUC).
 
-Two vertical lines are added on the figure. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (sparse solution). The values of the corresponding $\beta$ coefficients are shown on the following plot.
+To make a decision about $\lambda$, we will use cross-validation on the training data set. We use 10-fold cross-validation because our data set is quite small, so it should not take too much time. We optimize the area under the receiver characteristic curve (AUC).
 
-```{r, echo=FALSE,out.width="50%"}
+Two vertical lines are added on the figure. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (sparse solution). The values of the corresponding $\beta$ coefficients are shown on the following plot and next to the figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
+
+```{r Lasso optimal, echo=FALSE,out.width="50%"}
 # Lasso with optimal lambda
 lambda_cv <- mCvLasso$lambda.min # optimal lambda
 id_lambda_cv <- which(mCvLasso$lambda == lambda_cv)
 auc_lasso <- mCvLasso$cvm[id_lambda_cv]
 
 # Optimal model 
-mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family = "binomial", lambda = lambda_cv)
+mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", lambda = lambda_cv)
 #summary(coef(mLassoOpt))
 
 # with optimal lambda (largest auc) the output shows the non-zero estimated regression coefficients
@@ -558,50 +564,46 @@ library(ggplot2)
 qplot(summary(coef(mLassoOpt))[-1,1],
       summary(coef(mLassoOpt))[-1,3]) + xlab("gene") + ylab("beta-hat") + geom_hline(yintercept = 0, color = "red")
 
+#colnames(X_raw)[summary(coef(mLassoOpt))[[1]]]
+grid.newpage()
+grid.table(colnames(X_raw)[summary(coef(mLassoOpt))[[1]]], theme = ttheme_minimal())
 
 ```
 
-We have now our optimal Lasso model with AUC 0.82.
+We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and AUC `r round(auc_lasso,2)` on the training data set, which is quite high.
 
 # Rigde regression
 
-The last model that we will fit on the training data is the Ridge regression model that uses the $L_2$-norm. The major difference between Lasso and ridge regression is that ridge regression does not perform feature selection. We will again fit the model by using cross validation with 10 folds. The optimal $\lambda$ is much bigger compared to the Lasso regression model. The AUC value equals. 0.78.
-
-```{r, echo=FALSE, cache = TRUE, out.width="50%"}
+```{r ridge, echo=FALSE, cache = TRUE, out.width="50%"}
 # Rigde regression
-mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family = "binomial")
+mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
 plot(mRidge, xvar = "lambda")
 
 # Rigde regression with cross-validation
 set.seed(44)
-mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure = "auc", nfolds = K) # alp = 0 -> ridge
+mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure =               "auc", nfolds=K) # alp = 0 -> ridge
 #plot(mCvRidge)
 
 # Ridge regression with optimal lambda
 rlambda_cv <- mCvRidge$lambda.min # optimal lambda
 id_rlambda_cv <- which(mCvRidge$lambda == rlambda_cv)
 auc_ridge <- mCvRidge$cvm[id_rlambda_cv]
-mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family = "binomial", lambda = rlambda_cv)
+mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", lambda = rlambda_cv)
 #summary(coef(mRidgeOpt))
-mCvRidge$lambda.min
-auc_ridge
 
 ```
 
+The last model that we will fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. We will again fit the model by using cross validation with 10 folds. The optimal $\lambda$ is much bigger compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
+
 ## Model evaluation
 
-We decide to continue with the optimal Lasso regression model because we found an high AUC value and because Lasso regression is easier to interpret as it does feature selection.
+We decide to continue with the optimal Lasso regression model because we found the highest AUC value of the 3 models implemented and because lasso regression is easier to interpret as it does feature selection.
 We now want to evaluate this final model on our test set. We can first look at the corresponding ROC curve.
 
-```{r help, echo=FALSE,  out.width="50%", warning=FALSE}
+```{r rocLasso, echo=FALSE,  out.width="50%", warning=FALSE}
 # plot roc curve for Lasso
-#BiocManager::install("plotROC")
-testX <- X_raw[-trainset, ]
-testY <- Y[-trainset]
-library(plotROC)
-library(ggplot2)
 dfLassoOpt <- data.frame(
-  pred = predict(mCvLasso, s = lambda_cv, newx = as.matrix(testX), family = "binomial", type = "response") %>% c(.),
+  pred = predict(mCvLasso, s = lambda_cv, newx = as.matrix(testX), family="binomial", type = "response") %>% c(.),
   known.truth = testY)
 
 roc <-
@@ -612,12 +614,10 @@ roc <-
   ylab("sensitivity (TPR)")
 roc
 
-calc_auc(roc)
+#calc_auc(roc)
 ```
 
-The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen as to minimize the misclassification error. For this, we will use our test data. We are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. We find the following cutoff and corresponding sensitivity and specificity. 
-
-```{r, echo=FALSE}
+```{r misclassification, echo=FALSE}
 # lasso on test data
 lasso_preds <- predict(mCvLasso, s = mCvLasso$lambda.min, newx = as.matrix(testX), family="binomial",type = "response")
 
@@ -638,19 +638,21 @@ calculate_misclass_error <- function(obs, pred, cutoff_values) {
     "misclass" = misclass_errors
   )
 }
-result <- calculate_misclass_error(testY, lasso_preds, seq(0.4, 0.9, by = 0.01))
-id <- which.min(result[, 2])
+# make sure we have the right levels in the test set
+levels(testY)[levels(testY)=="accept"] <- 0
+levels(testY)[levels(testY)=="reject"] <- 1
+result <- calculate_misclass_error(testY, lasso_preds, seq(0.4,0.9,by=0.01))
+id <- which.min(result[,2])
 cutoff <- result[id, 1]
-cutoff
 newY <- ifelse(lasso_preds > cutoff, 1, 0)  # everything bigger than cutoff -> predict 1
 #newY
 
 # calculate sensitivity and specificity
 sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
-sens 
-spec
 ```
+
+We also find a high AUC value on the test set `r calc_auc(roc)[1,3]`. The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen as to minimize the misclassification error. For this, we will use our test data. We are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. We find the cutoff `r cutoff`and corresponding sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## Conclusions
