@@ -207,6 +207,9 @@ Not every gene in the data set is an indicator for kidney rejection. In this sec
 We first perform these t-tests for every gene in the data, with an individual significance level of 5%. Because we are performing multiple testing we would expect to find about 500 genes with a p-value lower than 5% if the null hypothesis holds for all the genes. 
 
 ```{r hyptest_tttests, echo = FALSE}
+fillblue = "lightblue"
+fillred = "firebrick"
+
 gene_data <- as.matrix(X_raw)
 group <- Y
 # non adjusted p-values 
@@ -237,7 +240,7 @@ threshold_nonadj <- selected_nonadj %>%
 hist_zval <- ggplot(data = t_stats) + 
   geom_histogram(
     mapping = aes(x = z_val, after_stat(density)),
-    bins = 20, alpha = .7, fill = 'lightblue') +
+    bins = 20, alpha = .7, fill = fillblue) +
   geom_vline(mapping = aes(xintercept = threshold_nonadj$left), color = 'red') +    
   geom_vline(mapping = aes(xintercept = threshold_nonadj$right), color = 'red')+
   geom_line(mapping = aes(x = z_val,y = dnorm(z_val)), color = 'blue') +
@@ -251,7 +254,7 @@ hist_zval <- ggplot(data = t_stats) +
 # signal histogram - current behaviour of p-values: uniform?
 hist_pval <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_val),
-                 fill = "firebrick", bins = 20, alpha = .7) +
+                 fill = fillred, bins = 20, alpha = .7) +
   labs(title = 'Histogram of p-values', x = "p-value") +
   theme_bw()
 
@@ -285,14 +288,14 @@ threshold_fdr <- selected_fdr %>%
 
 hist_fdr <- ggplot(t_stats) + 
   geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
-                             fill="lightblue", bins = 20, alpha = 0.7)+
+                             fill=fillblue, bins = 20, alpha = 0.7)+
   geom_vline(mapping = aes(xintercept = threshold_fdr$left),
              color = 'red') +    
   geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)),
             color = 'blue') +
   labs(title = 'Histogram of z-values') +
   geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
-                             fill = "lightblue", bins = 20, alpha = .7) +
+                             fill = fillblue, bins = 20, alpha = .7) +
   geom_vline(mapping = aes(xintercept = threshold_fdr$left), color = 'red') +    
   geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)), color = 'blue') +
   theme_bw()            
@@ -300,7 +303,7 @@ hist_fdr <- ggplot(t_stats) +
 # signal histogram - current behaviour of p-values: uniform?
 hist_pscale <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_scale),
-                 fill = "firebrick", bins = 20, alpha = 0.7) +
+                 fill = fillred, bins = 20, alpha = 0.7) +
   labs(title = 'Histogram of p-values') +
   theme_bw()
 
@@ -369,7 +372,7 @@ summ_lfdr <- t_stats %>%
 data_lfdr <- as_tibble(fdr_x$mat)
 plot_lfdr <- ggplot(data_lfdr) + 
   geom_col(mapping=aes(x = x, y=counts/sum(counts)),
-           fill = "lightblue") +
+           fill = fillblue) +
   geom_vline(xintercept = threshold, col = 'red') +
   geom_line(mapping = aes(x = x, y = f0/sum(f0)),
             col = 'blue') +
