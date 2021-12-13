@@ -133,7 +133,7 @@ abline(v = c(
 
 The histograms (Figures 4 and 5) confirm this finding which gives us a reason to believe that sparse PCA is worthwhile. 
 
-```{r sparce PCA, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center" }
+```{r sparce PCA, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 par(pch = 19, mfrow = c(1, 2))
 set.seed(45)
 fit_loadings1 <- cv.glmnet(X, Z[, 1],
@@ -169,7 +169,7 @@ For both PC1 and PC2 around 200 genes are important (Figure 6), which can provid
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures 7 and 8.
 
 
-```{r LDA, warning = FALSE, echo = FALSE}
+```{r LDA, warning = FALSE, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 kidney.lda <- MASS::lda(x = X, grouping = Y)
 Vlda <- kidney.lda$scaling
 colnames(Vlda) <- paste0("V", 1:ncol(Vlda))
