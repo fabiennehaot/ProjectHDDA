@@ -222,7 +222,7 @@ t_stats <- bind_rows(ttest_results) %>%
                             TRUE~ qnorm(1-p_val/2)))
 ```
 
-```{r hyptest_unadjusted, fig.height = 4, echo = FALSE}
+```{r hyptest_unadjusted, fig.height = 4, echo = FALSE, , fig.height = 5, fig.width = 10, fig.align = "center"}
 # selection
 nonadj_level <- 0.05
 selected_nonadj <- t_stats %>% filter(p_val< nonadj_level)
@@ -353,7 +353,7 @@ prop_tp_r <- cdf_true_positive/sum(dens1_mat)
 The left plot shows the density of both populations. The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`%. This means `r round(10000*(1 - prop_h0),0)` genes for our data set. We do not expect to find signal genes in the right tail.  The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The height of the left FDR-graph is the FDR for all the genes with z-values smaller than the threshold shown on the x-axis.  
 We want to control the FDR for 10%, for this we can find the value on the x-axis for which the left FDR - graph is equal to 10% (or calculate the threshold using interpolation), the threshold for the z-values becomes `r round(threshold,3)`.  The third graph returns the probability that a non-null gene can be detected when the nominal local fdr is set at a given local fdr-level. The local fdr-level associated with an FDR of 10% is `r round(100* lfdr_level,1)`% which means that we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
 
-```{r lfdr_genes, echo = FALSE, fig.height = 4}
+```{r lfdr_genes, echo = FALSE, fig.height = 5, fig.align = "center"}
 
 t_stats <- t_stats %>%
   mutate(
@@ -442,7 +442,7 @@ full_model_cv$delta[1]
 ```
 First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we used all PCs, we got a warning because we are overfitting the data.
 
-```{r eachPC, echo = FALSE, warning = FALSE}
+```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 auc_cv_glm <- function(trials, data, folds){
   full_model <- suppressWarnings(glm(Y ~ ., data = data, family = "binomial"))
   n_trials <- length(trials)
@@ -473,36 +473,31 @@ set.seed(42)
 trials <- seq(1, nrow(fit_data), 10)
 folds <- 9
 cvpcr_run1 <- auc_cv_glm(trials, fit_data, folds)
-nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc
+nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc # largest AUC for this number of PC's
 ggplot(cvpcr_run1) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue') +
   geom_vline(mapping = aes(xintercept = nr_pc_opt1),col = 'firebrick')+
   labs(title = 'cross validation PCR: steps of 10')+
   theme_bw() -> p1
 
-nr_pc_opt1 # largest AUC for this number of PC's
-
 # zoom in: small steps(1) - same seed
 set.seed(42)
 trials <- seq(1, 20)
 folds <- 9
 cvpcr_run2 <- auc_cv_glm(trials, fit_data, folds)
-nr_pc_opt2 <- cvpcr_run2 %>% filter(auc == max(auc)) %>% .$nr_of_pc
+nr_pc_opt2 <- cvpcr_run2 %>% filter(auc == max(auc)) %>% .$nr_of_pc  #largest AUC for this number of PCs
 ggplot(cvpcr_run2) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue')+
   geom_vline(mapping = aes(xintercept = nr_pc_opt2), col = 'firebrick')+
   labs(title ='cross validation PCR: steps of 1') +
   theme_bw() -> p2
 
-nr_pc_opt2 #largest AUC for this number of PCs
-
 grid.arrange(p1, p2, ncol = 2) # plot the 2 plots next to each other
-
 ```
 
 In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number of PCs of `r nr_pc_opt2`.
 
-```{r PCRfinal, echo = FALSE, warning = FALSE}
+```{r PCRfinal, echo = FALSE, warning = FALSE, fig.align = "center"}
 pca <- prcomp(trainX)
 Vk <- pca$rotation[, 1:nr_pc_opt2] # the loadings matrix
 Zk <- pca$x[, 1:nr_pc_opt2]
@@ -511,15 +506,17 @@ summary(pcr_model1)
 
 pcr_train = tibble(pcr_score = pcr_model1$fitted.values, 
                    rejection = trainY)
+                   
 p_dens_pcr <- ggplot(pcr_train) +
   geom_density(mapping = aes(x = pcr_score, fill=rejection), 
                alpha = 0.5) +
-  labs(title = "Density for 2 PC's: densities")+
+  labs(title = "Density for 2 PC's: densities") +
   scale_fill_manual(values = c('firebrick', 'lightblue')) +
   theme_bw() 
 
 p_dens_pcr
 ```
+
 In the last step, a principle component regression model with `r nr_pc_opt2` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
 When we plot the two densities of the accepted and rejected kidneys with this model, we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
