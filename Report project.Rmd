@@ -420,7 +420,7 @@ Z <- pca_X$x
 n_PC <- ncol(Z)
 n_PC
 ```
-First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PCs are available in the train dataset.
+First, the principal components are calculated and the total number of available PCs is selected. In our case, `r n_PC` PCs are available in the train dataset.
 
 ```{r fullPCR, include = FALSE, warning = FALSE}
 fit_data <- data.frame(trainY, Z)
@@ -491,7 +491,7 @@ ggplot(cvpcr_run2) +
 grid.arrange(p1, p2, ncol = 2, top = "Figure 14") # plot the 2 plots next to each other
 ```
 
-In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number of PCs of `r nr_pc_opt2`.
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number `r nr_pc_opt2` PCS.
 
 ```{r PCRfinal, echo = FALSE, warning = FALSE, fig.align = "center"}
 pca <- prcomp(trainX)
@@ -513,7 +513,7 @@ p_dens_pcr <- ggplot(pcr_train) +
 p_dens_pcr
 ```
 
-In the last step, a principle component regression model with `r nr_pc_opt2` is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
+In the last step, a principle component regression model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
 When we plot the two densities of the accepted and rejected kidneys with this model, we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
 ### Lasso regression
@@ -581,12 +581,12 @@ mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, fam
 
 ```
 
-The last model that we will fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. We will again fit the model by using cross validation with 10 folds. The optimal $\lambda$ is much bigger compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
+The last model that we will fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. We will again fit the model by using cross validation with 10 folds. The optimal $\lambda$ is much higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
 
 ## Model evaluation
 
-We decide to continue with the optimal Lasso regression model because we found the highest AUC value of the 3 models implemented and because lasso regression is easier to interpret as it does feature selection.
-We now want to evaluate this final model on our test set. We can first look at the corresponding ROC curve.
+We decide to continue our analysis with the optimal Lasso regression model because it has the highest AUC value of the 3 implemented models and because it is easier to interpret as it does feature selection.
+Next, we evaluate this final model on our test set. First, the corresponding ROC curve is examined.
 
 ```{r rocLasso, echo = FALSE,  out.width = "50%", warning = FALSE}
 # plot roc curve for Lasso
@@ -647,7 +647,7 @@ sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
 ```
 
-We also find a high AUC value on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen as to minimize the misclassification error. For this, we will use our training data again. Once we have chosen our cutoff, we want to assess the performance of our final model on a test set that contains observations we did not use to fit the model. How good is it in predicting the right group for new observations? We are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
+A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is decided, we want to assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## References
