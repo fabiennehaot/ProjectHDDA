@@ -109,7 +109,7 @@ p_dens <- ggplot(tb_scores) +
 grid.arrange(p_scatter, p_dens, ncol = 2)
 ```
 
-The first 2 PCs explain 19% of the variability of X and with the first 50 PCs we obtain 63% of the variability of PCs. 
+The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
 
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look Figure 2. 
 We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 3
@@ -380,7 +380,7 @@ We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. We 
 
 ## Model Selection
 
-In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a train (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model. We will center and scale the training set. Afterwards, the same scale and translation factor are applied on the test set.
+In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a training (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model. We will center and scale the training set. Afterwards, the same scale and translation factor are applied on the test set.
 
 ```{r training_and_test_data, include = FALSE}
 set.seed(1234)
@@ -420,7 +420,7 @@ Z <- pca_X$x
 n_PC <- ncol(Z)
 n_PC
 ```
-First, the principal components are calculated and the total number of available PCs is selected. In our case, `r n_PC` PCs are available in the train dataset.
+First, the PCs are calculated and the total number is selected. In our case, `r n_PC` PCs are available in the training dataset.
 
 ```{r fullPCR, include = FALSE, warning = FALSE}
 fit_data <- data.frame(trainY, Z)
@@ -436,7 +436,7 @@ full_model_cv <- suppressMessages(cv.glm(
 
 full_model_cv$delta[1] 
 ```
-First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we use all PCs, we got a warning for overfitting the data.
+First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we use all PCs, we got a warning for overfitting the data.
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 auc_cv_glm <- function(trials, data, folds){
@@ -491,7 +491,7 @@ ggplot(cvpcr_run2) +
 grid.arrange(p1, p2, ncol = 2, top = "Figure 14") # plot the 2 plots next to each other
 ```
 
-In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number `r nr_pc_opt2` PCS.
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number `r nr_pc_opt2` PCs.
 
 ```{r PCRfinal, echo = FALSE, warning = FALSE, fig.align = "center"}
 pca <- prcomp(trainX)
@@ -513,12 +513,12 @@ p_dens_pcr <- ggplot(pcr_train) +
 p_dens_pcr
 ```
 
-In the last step, a principle component regression model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
+In the last step, a PCR model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
 When we plot the two densities of the accepted and rejected kidneys with this model, we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
 ### Lasso regression
 
-We are now going to use two penalised (logistic) regression models. We start with Lasso regression that uses the $L_1$-norm. We will again only use the training set to fit the model. The following figure nicely shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
+We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. The following figure clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
 
 
 ```{r Lasso, echo = FALSE, fig.show = "hold", out.width = "50%"}
@@ -533,7 +533,7 @@ mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, f
 plot(mCvLasso)
 ```
 
-To make a decision about $\lambda$, we will use cross-validation on the training data set. We use 10-fold cross-validation because our data set is quite small, so it should not take too much time. We optimize the area under the receiver characteristic curve (AUC).
+To make a decision about $\lambda$, cross-validation is used on the training data set. We use 10-fold cross-validation because the data set is relatively small, and should therefore not take too much time. We optimize the area under the receiver characteristic curve (AUC).
 
 Two vertical lines are added on the figure. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (sparse solution). The values of the corresponding $\beta$ coefficients are shown on the following plot and next to the figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
 
@@ -558,7 +558,7 @@ grid.table(colnames(X_raw)[summary(coef(mLassoOpt))[[1]]], theme = ttheme_minima
 
 ```
 
-We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and AUC `r round(auc_lasso,2)` on the training data set, which is quite high.
+We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and AUC `r round(auc_lasso,2)` on the training data set, which is relatively high.
 
 ### Rigde regression
 
@@ -581,7 +581,7 @@ mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, fam
 
 ```
 
-The last model that we will fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. We will again fit the model by using cross validation with 10 folds. The optimal $\lambda$ is much higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
+The last model that we fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. The model is also fitted with a 10 folds cross validation. The optimal $\lambda$ is significantly higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
 
 ## Model evaluation
 
@@ -647,7 +647,7 @@ sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
 ```
 
-A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is decided, we want to assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
+A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is decided in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is decided, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## References
