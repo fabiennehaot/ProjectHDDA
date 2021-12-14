@@ -270,7 +270,7 @@ nr_detected_nonadj <- as.numeric(table_p_nonadj['TRUE'])
 
 ```
 
-The standard normal curve is too narrow to fit the distribution. This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot use the @BH:1995 procedure like this, because it uses standard normal null distribution to calculate the FDR.
+The standard normal curve is too narrow to fit the distribution. This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot @BH:1995 now, because this procedure uses the standard normal null distribution to calculate the FDR.
 
 ```{r hyptest_fdr_padj, echo = FALSE, fig.height = 4}
 # adjusted p values
@@ -329,7 +329,7 @@ nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 
 ```
 
-Standardizing the z-values does not help, the theoretical distribution is now to wide to apply the @BH:1995 procedure.  
+Standardizing the z-values does not help, the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
 
 
@@ -353,7 +353,7 @@ prop_tp_r <- cdf_true_positive/sum(dens1_mat)
 
 ```
 
-The left plot shows the density of both populations. The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`% (`r round(10000*(1 - prop_h0),0)` genes) for our data set.  The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The threshold is the value on the x-axis corresponding with height 10%. This threshold is `r round(threshold,3)`.  The third graph tells us that for an FDR of 10% or a local fdr-level of `r round(100* lfdr_level,1)`%, we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
+The left plot shows the density of both populations. The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`% (`r round(10000*(1 - prop_h0),0)` genes) for our data set.  The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The threshold is the value on the x-axis corresponding with height 10%. This threshold is `r round(threshold, 2)`.  From the third graph we can deduce that for an FDR of 10% or a local fdr-level of `r round(100* lfdr_level,1)`%, we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
 
 ```{r lfdr_genes, echo = FALSE, fig.height = 5, fig.align = "center"}
 
