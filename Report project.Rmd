@@ -41,7 +41,7 @@ Y <- factor(Einecke2010Kidney[, 1],
 ```
 
 ## Exploration of the Data
-The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values.
+The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a loook at possible outliers. Figure 1 illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values.
 
 ```{r soundness checks, echo = FALSE}
 # missing values
@@ -109,7 +109,7 @@ p_dens <- ggplot(tb_scores) +
 grid.arrange(p_scatter, p_dens, ncol = 2)
 ```
 
-The first 2 PCs explain 19% of the variability of X and with the first 50 PCs we obtain 63% of the variability of PC’s. 
+The first 2 PCs explain 19% of the variability of X and with the first 50 PCs we obtain 63% of the variability of PCs. 
 
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look Figure 2. 
 We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 3
@@ -267,7 +267,7 @@ table_p_nonadj <- table(t_stats$p_val < nonadj_level)
 nr_detected_nonadj <- as.numeric(table_p_nonadj['TRUE'])
 ```
 
-The standard normal curve is too narrow to fit the distribution (Figure 10A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 10B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot @BH:1995 now, because this procedure uses the standard normal null distribution to calculate the FDR.
+The standard normal curve is too narrow to fit the distribution (Figure 10A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 10B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedue now, because this uses the standard normal null distribution to calculate the FDR.
 
 ```{r hyptest_fdr_padj, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 # adjusted p values
@@ -420,7 +420,7 @@ Z <- pca_X$x
 n_PC <- ncol(Z)
 n_PC
 ```
-First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PC's are available.
+First, the principal components are calculated and the total number of available PC's is selected. In our case, `r n_PC` PCs are available in the train dataset.
 
 ```{r fullPCR, include = FALSE, warning = FALSE}
 fit_data <- data.frame(trainY, Z)
@@ -436,7 +436,7 @@ full_model_cv <- suppressMessages(cv.glm(
 
 full_model_cv$delta[1] 
 ```
-First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we used all PCs, we got a warning because we are overfitting the data.
+First we try to fit a model with all the PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we use all PCs, we got a warning for overfitting the data.
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 auc_cv_glm <- function(trials, data, folds){
