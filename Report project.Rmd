@@ -611,9 +611,9 @@ roc
 #calc_auc(roc)
 ```
 
-```{r misclassification, echo = FALSE}
-# lasso on test data
-lasso_preds <- predict(mCvLasso, s = mCvLasso$lambda.min, newx = as.matrix(testX), family = "binomial", type = "response")
+```{r misclassification op training data, echo=FALSE}
+# predictions on training set
+lasso_preds_train <- predict(mCvLasso, s = mCvLasso$lambda.min, newx = as.matrix(trainX), family="binomial",type = "response")
 
 # Inputs:
 # * obs: vector of test observations
@@ -632,21 +632,28 @@ calculate_misclass_error <- function(obs, pred, cutoff_values) {
     "misclass" = misclass_errors
   )
 }
-# make sure we have the right levels in the test set
-levels(testY)[levels(testY) == "accept"] <- 0
-levels(testY)[levels(testY) == "reject"] <- 1
-result <- calculate_misclass_error(testY, lasso_preds, seq(0.4, 0.9, by = 0.01))
+# make sure we have the right levels in the training en test set
+levels(trainY)[levels(trainY)=="accept"] <- 0
+levels(trainY)[levels(trainY)=="reject"] <- 1
+levels(testY)[levels(testY)=="accept"] <- 0
+levels(testY)[levels(testY)=="reject"] <- 1
+
+# optimize cutoff on the training set
+result <- calculate_misclass_error(trainY, lasso_preds_train, seq(0.1,0.9,by=0.01))
 id <- which.min(result[,2])
-cutoff <- result[id, 1]
-newY <- ifelse(lasso_preds > cutoff, 1, 0)  # everything bigger than cutoff -> predict 1
-#newY
+cutoff <- result[id, 1]  # cutoff optimized on training data
+cutoff
+
+# how does it perform on the test set with the chosen cutoff
+lasso_preds_test <- predict(mCvLasso, s = mCvLasso$lambda.min, newx = as.matrix(testX), family="binomial",type = "response")
+newY <- ifelse(lasso_preds_test > cutoff, 1, 0)  # everything bigger than cutoff -> predict 1
 
 # calculate sensitivity and specificity
 sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
 ```
 
-We also find a high AUC value on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen as to minimize the misclassification error. For this, we will use our test data. We are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. We find the cutoff `r cutoff` and corresponding sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
+We also find a high AUC value on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is chosen as to minimize the misclassification error. For this, we will use our training data again. Once we have chosen our cutoff, we want to assess the performance of our final model on a test set that contains observations we did not use to fit the model. How good is it in predicting the right group for new observations? We are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## References
