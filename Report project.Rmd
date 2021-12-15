@@ -342,6 +342,8 @@ We  will use the local approach instead, where we assume that the observed histo
 #local fdr
 fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A: histogram")  #add here maintitle Figure 8 and change title other plots?
 prop_h0 <- fdr_x$fp0['mlest', 'p0']
+mtext("Figure 8", outer = TRUE, cex = 1.5)
+
 
 #control FDR for 10%
 FDR_left <- fdr_x$mat[, 'Fdrleft']
