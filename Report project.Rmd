@@ -131,7 +131,7 @@ fig_nr <- fig_nr + 1
 
 ```
 
-The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
+The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X (Figure 2). 
 
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure `r fig_nr-1`A. 
 We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. Figure `r fig_nr-1`B confirms this observation by illustrating that the density curve of the rejected cases (blue) is situated where the values for PC1 and PC2 are low, which corresponds to the bottom left corner of Figure `r fig_nr-1`A. On the other hand, the density curve of the accepted cases (red) is situated where PC1 and PC2 are higher, which corresponds to the top right corner.
@@ -378,16 +378,16 @@ table_p_adj <- table(t_stats$p_adj < fdr_level)
 nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 ```
 
-Standardizing the z-values does not help (Figure 7.A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
+Standardizing the z-values does not help (Figure 8A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
 
 
 ```{r local_fdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 #local fdr
-par(mfrow=c(1,1), omi = c(0, 0, 2, 0), oma = c(0, 0, 1, 0))
-fdr_x <- locfdr(t_stats$z_val, plot = 4, main= "histogram")
+par(mfrow=c(1, 1), omi = c(0, 0, 2, 0), oma = c(0, 0, 2, 0))
+fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "histogram")
 mtext(paste0("Figure ", fig_nr,": Local false discovery rate"),
-      outer=TRUE, adj=adj_txt, side=loc_txt, cex=cex_txt, padj=padj_txt)
+      outer = TRUE, adj = adj_txt, side = loc_txt, cex = cex_txt, padj = padj_txt)
 fig_nr <- fig_nr + 1
 
 prop_h0 <- fdr_x$fp0['mlest', 'p0']
@@ -406,7 +406,7 @@ cdf_true_positive = sum(dens1_mat[1:id]) + dens1_mat[id+1] * t_int
 prop_tp_r <- cdf_true_positive/sum(dens1_mat)
 ```
 
-The left plot shows the density of both populations. The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`% (`r round(10000*(1 - prop_h0),0)` genes) for our data set.  The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The threshold is the value on the x-axis corresponding with height 10%. This threshold is `r round(threshold, 2)`.  From the third graph we can deduce that for an FDR of 10% or a local fdr-level of `r round(100* lfdr_level,1)`%, we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
+The left plot shows the density of both populations (Figure 9). The proportion of differentiated genes is expected to be `r round(100*(1 - prop_h0),2)`% (`r round(10000*(1 - prop_h0),0)` genes) for our data set.  The second plot shows the local false discovery rate. Since we want to control the FDR we are interested in the red dashed line. The threshold is the value on the x-axis corresponding with height 10%. This threshold is `r round(threshold, 2)`.  From the third graph we can deduce that for an FDR of 10% or a local fdr-level of `r round(100* lfdr_level,1)`%, we expect `r round(100*prop_tp_r)`% of all differentiated genes to be correctly identified.   
 
 ```{r lfdr_genes, echo = FALSE, fig.height = 5, fig.align = "center"}
 t_stats <- t_stats %>%
@@ -436,7 +436,6 @@ grid.arrange(plot_lfdr,
              top = textGrob(title,gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
-
 ```
 
 We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. We expect to have about `r round(fdr_level* summ_lfdr$nr_of_genes)` falsely detected genes. The genes detected by the local fdr will be added as an appendix.  
