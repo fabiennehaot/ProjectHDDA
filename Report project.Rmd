@@ -134,7 +134,7 @@ fig_nr <- fig_nr + 1
 The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
 
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure `r fig_nr-1`A. 
-We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. Figure `r fig_nr-1`B confirms this observation.
+We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. Figure `r fig_nr-1`B confirms this observation by illustrating that the density curve of the rejected cases (blue) is situated where the values for PC1 and PC2 are low in contrary to the density curve of the accepted cases (red), which is situated where PC1 and PC2 are higher.
 
 Next, it is interesting to get more information on which genes are driving the PCs. A lot of the PCs are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
 
@@ -205,7 +205,7 @@ fig_nr = fig_nr + 1
 ```
 
 
-For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-1`A).
+For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-1`A). This subset of genes are the drivers of the variablity in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transpantation will be successful or not.
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
 
