@@ -41,7 +41,7 @@ Y <- factor(Einecke2010Kidney[, 1],
 ```
 
 ## Exploration of the Data
-The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a loook at possible outliers. Figure 1 illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values.
+The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values.
 
 ```{r soundness checks, echo = FALSE}
 # missing values
@@ -64,7 +64,7 @@ ggplot(data = tb_summary) +
   geom_point(mapping = aes(x = Nr, y = MinPerVar), col = 'blue', size = .3) +
   geom_point(mapping = aes(x = Nr, y = MeanPerVar), col = 'green', size = .3) +
   geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3) +
-  ggtitle("Figure 1") +
+  ggtitle("Figure 1: Data exploration") +
   theme_bw()
 
 X <- scale(X_raw)
@@ -96,17 +96,17 @@ tb_scores <- tibble(PCA1 = Scores[, 1],
 p_scatter <- ggplot(tb_scores) +
   geom_point(mapping = aes(x = PCA1, y = PCA2, col = Rejected)) +
   scale_color_manual(values = c("accept" = "red", "reject" = "blue")) +
-  labs(title = "A Scores for 2 PCA's") +
+  labs(title = "A. Scores for 2 PCAs") +
   theme_bw()   
 
 p_dens <- ggplot(tb_scores) +
   geom_density(mapping=aes(x = PCA1 + PCA2, fill = Rejected),
                alpha = 0.5) +
-  labs(title = "B Density for 2 PC's: densities") +
+  labs(title = "B. Density for 2 PCs: densities") +
   scale_fill_manual(values = c('red', 'blue')) +
   theme_bw()  
 
-grid.arrange(p_scatter, p_dens, ncol = 2, top = "Figure 2")
+grid.arrange(p_scatter, p_dens, ncol = 2, top = "Figure 2: Principal component analysis")
 ```
 
 The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
@@ -119,22 +119,22 @@ Next, it is interesting to get more information on which genes are driving the P
 ```{r loadings, echo = FALSE, , fig.height = 5, fig.width = 10, fig.align = "center"}
 par(pch = 19, mfrow = c(1, 2), oma = c(0, 0, 2, 0))
 
-hist(V[, 1], breaks = 50, xlab = "PC 1 loadings", main = "A Histogram PC 1 loadings")
+hist(V[, 1], breaks = 50, xlab = "PC 1 loadings", main = "A. Histogram PC 1 loadings")
 abline(v = c(
   quantile(V[, 1], 0.05),
   quantile(V[, 1], 0.95)
 ), col = "red", lwd = 2)
 
-hist(V[, 2], breaks = 50, xlab = "PC 2 loadings", main = "B Histogram PC 2 loadings")
+hist(V[, 2], breaks = 50, xlab = "PC 2 loadings", main = "B. Histogram PC 2 loadings")
 abline(v = c(
   quantile(V[, 2], 0.05),
   quantile(V[, 2], 0.95)
 ), col = "red", lwd = 2)
 
-mtext("Figure 3", outer = TRUE, cex = 1.5)
+mtext("Figure 3: Loadings", outer = TRUE, cex = 1.5)
 ```
 
-The histograms (Figures 3 A and B) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
+The histograms (Figures 3.A and 3.B) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
 
 ```{r sparce PCA, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 par(pch = 19, mfrow = c(1, 2), oma = c(0, 0, 2, 0))
@@ -158,15 +158,15 @@ par(mfrow = c(1, 2))
 cols <- c("0" = "red", "1" = "blue")
 plot(Z[, 1], Z[, 2],
      col = cols[Y], xlab = "PC1", ylab = "PC2", pch = 16,
-     main = "A All genes \nfor PC1 and PC2"
+     main = "A. All genes \nfor PC1 and PC2"
 )
 
 plot(SPC1, SPC2,
      col = cols[Y], xlab = "SPC1", ylab = "SPC2", pch = 16,
-     main = paste("B", non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
+     main = paste("B.", non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
 )
 
-mtext("Figure 4", outer = TRUE, cex = 1.5)
+mtext("Figure 4: Visualization of the first two PCs", outer = TRUE, cex = 1.5)
 ```
 
 For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure 4A).
@@ -183,7 +183,7 @@ colnames(Zlda) <- paste0("Z", 1:ncol(Zlda))
 
 par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
 boxplot(Zlda ~ Y, col = cols, ylab = expression("Z"[1]),
-        main = "A LDA with total set of genes")
+        main = "A. LDA with total set of genes")
 
 set.seed(45)
 lda_loadings <- cv.glmnet(X, Zlda, alpha = 0.5, nfolds = 5)
@@ -198,10 +198,10 @@ SLDA <- X %*% sparse_lda_loadings[-1]
 n_nonzero <- sum(sparse_lda_loadings != 0)
 boxplot(SLDA ~ Y,
         col = cols, ylab = "SLDA",
-        main = sprintf("B LDA with subset of %d genes", n_nonzero)
+        main = sprintf("B. LDA with subset of %d genes", n_nonzero)
 )
 
-mtext("Figure 5", outer = TRUE, cex = 1.5)
+mtext("Figure 5: Linear discriminant analysis", outer = TRUE, cex = 1.5)
 ```
 
 Both the regular LDA (Figure 5A) and the sparse LDA (Figure 5B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
@@ -255,7 +255,7 @@ hist_zval <- ggplot(data = t_stats) +
              color = col_red) +    
   geom_vline(mapping = aes(xintercept = threshold_nonadj$right), color = col_red)+
   geom_line(mapping = aes(x = z_val,y = dnorm(z_val)), color = col_blue) +
-  labs(title = "A Histogram of  z-values",
+  labs(title = "A. Histogram of  z-values",
        x = "z-values",
        y = "density") +
   annotate(geom = "text", x = -7, y = 0.38, 
@@ -266,7 +266,7 @@ hist_zval <- ggplot(data = t_stats) +
 hist_pval <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_val),
                  fill = fill_red, bins = 20, alpha = .7) +
-  labs(title = 'B Histogram of p-values', x = "p-value") +
+  labs(title = 'B. Histogram of p-values', x = "p-value") +
   theme_bw()
 
 grid.arrange(hist_zval, hist_pval, ncol = 2,
@@ -302,7 +302,7 @@ hist_fdr <- ggplot(t_stats) +
              color = col_red) +    
   geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)),
             color = col_blue) +
-  labs(title = 'A Histogram of z-values') +
+  labs(title = 'A. Histogram of z-values') +
   geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
                              fill = fill_blue, bins = 20, alpha = .7) +
   geom_vline(mapping = aes(xintercept = threshold_fdr$left), color = col_red) +    
@@ -313,7 +313,7 @@ hist_fdr <- ggplot(t_stats) +
 hist_pscale <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_scale),
                  fill = fill_red, bins = 20, alpha = 0.7) +
-  labs(title = 'B Histogram of p-values') +
+  labs(title = 'B. Histogram of p-values') +
   theme_bw()
 
 # monotonous transformation:
@@ -340,7 +340,7 @@ We  will use the local approach instead, where we assume that the observed histo
 
 ```{r localfdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 #local fdr
-fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A: histogram")  #add here maintitle Figure 8 and change title other plots?
+fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A. Histogram")  #add here maintitle Figure 8 and change title other plots?
 prop_h0 <- fdr_x$fp0['mlest', 'p0']
 mtext("Figure 8", outer = TRUE, cex = 1.5)
 
@@ -392,7 +392,7 @@ We have found `r summ_lfdr$nr_of_genes` candidates for differentiated genes. We 
 
 ## Model Selection
 
-In the next step we want the predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a training (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model. We will center and scale the training set. Afterwards, the same scale and translation factor are applied on the test set.
+In the next step we want to predict the rejection status using the gene expression levels. Therefore, we first start with splitting the dataset into a training (70%) and test (30%) dataset. The training set will be used to train the model and tune the hyperparameters (for example the penalty parameter in lasso regression), while the test set will be used to evaluate the out-of-sample performance of our final model. We will center and scale the training set. Afterwards, the same scale and translation factor are applied on the test set.
 
 ```{r training_and_test_data, include = FALSE}
 set.seed(1234)
@@ -421,7 +421,7 @@ test_data <- data.frame(testY, testX)
 ```
 Here, we will evaluate three prediction models: principal component regression (PCR), ridge regression and lasso regression.
 
-### Principal compentent regression (PCR)
+### Principal component regression (PCR)
 
 ```{r PCR, include = FALSE}
 # Calculate PCA and extract scores
@@ -448,7 +448,7 @@ full_model_cv <- suppressMessages(cv.glm(
 
 full_model_cv$delta[1] 
 ```
-First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r full_model_cv$delta[1]`. However, because we use all PCs, we got a warning for overfitting the data.
+First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 auc_cv_glm <- function(trials, data, folds){
@@ -481,11 +481,11 @@ set.seed(42)
 trials <- seq(1, nrow(fit_data), 10)
 folds <- 9
 cvpcr_run1 <- auc_cv_glm(trials, fit_data, folds)
-nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc # largest AUC for this number of PC's
+nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc # largest AUC for this number of PCs
 ggplot(cvpcr_run1) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue') +
   geom_vline(mapping = aes(xintercept = nr_pc_opt1), col = 'firebrick')+
-  labs(title = 'A cross validation PCR: steps of 10')+
+  labs(title = 'A. Cross validation PCR: steps of 10')+
   theme_bw() -> p1
 
 # zoom in: small steps(1) - same seed
@@ -497,13 +497,13 @@ nr_pc_opt2 <- cvpcr_run2 %>% filter(auc == max(auc)) %>% .$nr_of_pc  #largest AU
 ggplot(cvpcr_run2) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue')+
   geom_vline(mapping = aes(xintercept = nr_pc_opt2), col = 'firebrick')+
-  labs(title = 'B cross validation PCR: steps of 1') +
+  labs(title = 'B. Cross validation PCR: steps of 1') +
   theme_bw() -> p2
 
-grid.arrange(p1, p2, ncol = 2, top = "Figure 10") # plot the 2 plots next to each other
+grid.arrange(p1, p2, ncol = 2, top = "Figure 10: Optimal number of PCs") # plot the 2 plots next to each other
 ```
 
-In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number `r nr_pc_opt2` PCs.
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but with steps of 1. This gives us an optimal number of `r nr_pc_opt2` PCs.
 
 ```{r PCRfinal, echo = FALSE, warning = FALSE, fig.align = "center"}
 pca <- prcomp(trainX)
@@ -518,7 +518,7 @@ pcr_train = tibble(pcr_score = pcr_model1$fitted.values,
 p_dens_pcr <- ggplot(pcr_train) +
   geom_density(mapping = aes(x = pcr_score, fill=rejection), 
                alpha = 0.5) +
-  labs(title = "Figure 11: Density for 2 PC's: densities") +
+  labs(title = "Figure 11: Density for 2 PCs: densities") +
   scale_fill_manual(values = c('red', 'blue')) +
   theme_bw() 
 
@@ -530,31 +530,29 @@ When we plot the two densities of the accepted and rejected kidneys with this mo
 
 ### Lasso regression
 
-We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. The following figure clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
+We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. Figure 12.A clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
 
 
 ```{r Lasso, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 par(mfrow=c(1,2),oma = c(0, 0, 2, 0))
 
 # Lasso
-mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial", 
-                 main = "A")  # alpha = 1 -> Lasso
-plot(mLasso, xvar = "lambda")
+mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial")  # alpha = 1 -> Lasso
+plot(mLasso, xvar = "lambda", main = "A. Coefficients in lasso regression")
 
 # cross validation to find optimal lambda
 set.seed(44)
 K <- 10 # number of folds
 mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", 
-                      main = "b",
                       type.measure = "auc", nfolds = K)
-plot(mCvLasso)
+plot(mCvLasso, main = "B. Choosing optimal lambda)
 
-mtext("Figure 12", outer = TRUE, cex = 1.5)
+mtext("Figure 12: Lasso regression", outer = TRUE, cex = 1.5)
 ```
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use 10-fold cross-validation because the data set is relatively small, and should therefore not take too much time. We optimize the area under the receiver characteristic curve (AUC).
 
-Two vertical lines are added on the figure. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (sparse solution). The values of the corresponding $\beta$ coefficients are shown on the following plot and next to the figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
+Two vertical lines are added on figure 12.B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown on figure 13 and next to this figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
 
 ```{r Lasso optimal, echo = FALSE, out.width = "50%"}
 # Lasso with optimal lambda
@@ -568,7 +566,7 @@ mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, fam
 
 # with optimal lambda (largest auc) the output shows the non-zero estimated regression coefficients
 library(ggplot2)
-qplot(main = "Figure 13", summary(coef(mLassoOpt))[-1,1],
+qplot(main = "Figure 13: Estimated coefficients", summary(coef(mLassoOpt))[-1,1],
       summary(coef(mLassoOpt))[-1,3]) + xlab("gene") + ylab("beta-hat") + geom_hline(yintercept = 0, color = "red")
 
 #colnames(X_raw)[summary(coef(mLassoOpt))[[1]]]
@@ -579,12 +577,12 @@ grid.table(colnames(X_raw)[summary(coef(mLassoOpt))[[1]]], theme = ttheme_minima
 
 We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and AUC `r round(auc_lasso,2)` on the training data set, which is relatively high.
 
-### Rigde regression
+### Ridge regression
 
 ```{r ridge, echo = FALSE, out.width = "50%"}
 # Rigde regression
 mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
-plot(mRidge, xvar = "lambda", main = "Figure 14")
+plot(mRidge, xvar = "lambda", main = "Figure 14: Coefficients ridge regression")
 
 # Rigde regression with cross-validation
 set.seed(44)
@@ -605,7 +603,7 @@ The last model that we fit on the training data is the ridge regression model th
 ## Model evaluation
 
 We decide to continue our analysis with the optimal Lasso regression model because it has the highest AUC value of the 3 implemented models and because it is easier to interpret as it does feature selection.
-Next, we evaluate this final model on our test set. First, the corresponding ROC curve is examined.
+Next, we evaluate this final model on our test set. First, the corresponding ROC curve is examined. Our model clearly performs better than random allocation of cases to the 2 groups.
 
 ```{r rocLasso, echo = FALSE,  out.width = "50%", warning = FALSE}
 # plot roc curve for Lasso
@@ -620,7 +618,7 @@ roc <-
   xlab("1-specificity (FPR)") +
   ylab("sensitivity (TPR)")
   
-print(roc + ggtitle("Figure 15"))
+print(roc + ggtitle("Figure 15: ROC curve"))
 
 #calc_auc(roc)
 ```
@@ -656,7 +654,6 @@ levels(testY)[levels(testY) == "reject"] <- 1
 result <- calculate_misclass_error(trainY, lasso_preds_train, seq(0.1, 0.9, by = 0.01))
 id <- which.min(result[, 2])
 cutoff <- result[id, 1]  # cutoff optimized on training data
-cutoff
 
 # how does it perform on the test set with the chosen cutoff
 lasso_preds_test <- predict(mCvLasso, s = mCvLasso$lambda.min, newx = as.matrix(testX), family="binomial",type = "response")
@@ -667,7 +664,7 @@ sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
 ```
 
-A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is decided in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is decided, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
+A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is selected in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is determined, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specifity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## References
