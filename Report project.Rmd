@@ -77,7 +77,7 @@ plot_first_view <- ggplot(data = tb_summary) +
   
 title <- paste0("Figure ",fig_nr,": Data exploration")
 grid.arrange(plot_first_view,
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 X <- scale(X_raw)
 ```
@@ -95,14 +95,14 @@ pca_x <- prcomp(X, center = FALSE, scale. = FALSE)
 var_explained <- svd_x$d^2 / sum(svd_x$d^2)
 
 dim_var = 1:150
-plot_var <- ggplot()+
-  geom_point(mapping = aes(x= dim_var,y=var_explained[dim_var]), col = col_red)+
-  geom_line(mapping = aes(x= dim_var,y=var_explained[dim_var]), col = col_red)+
-  labs(y = "Percent variance explained", x = "PCs")+
+plot_var <- ggplot() +
+  geom_point(mapping = aes(x = dim_var, y = var_explained[dim_var]), col = col_red) +
+  geom_line(mapping = aes(x = dim_var, y = var_explained[dim_var]), col = col_red) +
+  labs(y = "Percent variance explained", x = "PCs") +
   theme_bw()
 
 title <- paste0("Figure ",fig_nr,": Variance explained by the first principal #components")
-grid.arrange(plot_var,top= textGrob(title, gp=gpar(fontsize = size_txt)))
+grid.arrange(plot_var,top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 Scores <- X %*% svd_x$v
@@ -124,9 +124,9 @@ p_dens <- ggplot(tb_scores) +
   scale_fill_manual(values = fill_response) +
   theme_bw()  
 
-title <- paste0("Figure ",fig_nr,": Principal component analysis")
+title <- paste0("Figure ", fig_nr, ": Principal component analysis")
 grid.arrange(p_scatter, p_dens, ncol = 2,
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 ```
@@ -142,23 +142,23 @@ Next, it is interesting to get more information on which genes are driving the P
 
 tb_loadings <- tibble(V1 = V[,1],V2= V[,2])
 hist_loading1 <- ggplot(tb_loadings)+
-  geom_histogram(mapping=aes(x=V1), fill = fill_blue, bins=50) + 
-  geom_vline(mapping = aes(xintercept =quantile(V1, 0.025)), col = col_red) +
-  geom_vline(mapping = aes(xintercept =quantile(V1, 0.975)), col = col_red) +
+  geom_histogram(mapping = aes(x=V1), fill = fill_blue, bins = 50) + 
+  geom_vline(mapping = aes(xintercept = quantile(V1, 0.025)), col = col_red) +
+  geom_vline(mapping = aes(xintercept = quantile(V1, 0.975)), col = col_red) +
   labs(title = 'A. Histogram PC 1 loadings', x = 'Loading', y = 'Frequency')+
   theme_bw()
 
   
-hist_loading2 <- ggplot(tb_loadings)+
-  geom_histogram(mapping=aes(x=V2), fill = fill_blue, bins=50) + 
+hist_loading2 <- ggplot(tb_loadings) +
+  geom_histogram(mapping = aes(x=V2), fill = fill_blue, bins = 50) + 
   geom_vline(mapping = aes(xintercept =quantile(V2, 0.025)), col = col_red) +
   geom_vline(mapping = aes(xintercept =quantile(V2, 0.975)), col = col_red) +
-  labs(title = 'B. Histogram PC 2 loadings', x = 'Loading', y = 'Frequency')+
+  labs(title = 'B. Histogram PC 2 loadings', x = 'Loading', y = 'Frequency') +
   theme_bw()
 
-title <- paste0("Figure ",fig_nr,": Histogram for PC-loadings")
+title <- paste0("Figure ", fig_nr, ": Histogram for PC-loadings")
 grid.arrange(hist_loading1, hist_loading2, ncol = 2,
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top= textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 ```
@@ -200,7 +200,7 @@ p_dens_sparse <- ggplot(tb_scores) +
 
 title <- paste0("Figure ",fig_nr,": Visualization of the first two sparse PCs")
 grid.arrange(p_scatter_sparse, p_dens_sparse, ncol = 2, 
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 ```
 
@@ -229,20 +229,20 @@ SLDA <- X %*% sparse_lda_loadings[-1]
 n_nonzero <- sum(sparse_lda_loadings != 0)
 # boxplot
 lda_box <- ggplot() +
-  geom_boxplot(mapping=aes(y = Zlda, groups=Y, fill=Y))+
-  scale_fill_manual(values=fill_response)+
-  labs(title= 'A. LDA with total set of genes', y = 'Rejection status') +
+  geom_boxplot(mapping = aes(y = Zlda, groups = Y, fill = Y)) +
+  scale_fill_manual(values = fill_response) +
+  labs(title = 'A. LDA with total set of genes', y = 'Rejection status') +
   theme_bw()
-slda_box <- ggplot()+
-  geom_boxplot(mapping=aes(y = Zlda, groups=Y, fill=Y))+
-  scale_fill_manual(values=fill_response)+
-  labs(title= paste0("B. LDA with subset of ",n_nonzero, " genes"), 
+slda_box <- ggplot() +
+  geom_boxplot(mapping = aes(y = Zlda, groups = Y, fill = Y)) +
+  scale_fill_manual(values = fill_response) +
+  labs(title = paste0("B. LDA with subset of ",n_nonzero, " genes"), 
        y = 'Rejection status') +
   theme_bw()
 
-title <- paste0("Figure ",fig_nr,": Linear discriminant analysis")
+title <- paste0("Figure ", fig_nr,": Linear discriminant analysis")
 grid.arrange(lda_box, slda_box, ncol = 2,              
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 
 ```
@@ -307,9 +307,9 @@ hist_pval <- ggplot(data = t_stats) +
   labs(title = 'B. Histogram of p-values', x = "p-value") +
   theme_bw()
 
-title <- paste0("Figure ",fig_nr,": Multiple t-tests unadjusted")
+title <- paste0("Figure ", fig_nr,": Multiple t-tests unadjusted")
 grid.arrange(hist_zval, hist_pval, ncol = 2,          
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 
 
@@ -368,9 +368,9 @@ pp_adj <- t_stats %>%
   theme_bw()
 
 # show histogram z-values +  monotonous adjustment for the p-values
-title <- paste0("Figure ",fig_nr,": Multiple t-tests: scaling and FDR-adjustment")
-grid.arrange(hist_fdr, hist_pscale, ncol=2,
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+title <- paste0("Figure ", fig_nr,": Multiple t-tests: scaling and FDR-adjustment")
+grid.arrange(hist_fdr, hist_pscale, ncol = 2,
+             top= textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 # number of detected genes
@@ -431,9 +431,9 @@ plot_lfdr <- ggplot(data_lfdr) +
   labs(x = 'z-value', y = 'density') +
   theme_bw()       
 
-title <- paste0("Figure ",fig_nr,": Multiple t-tests: Local FDR")
+title <- paste0("Figure ", fig_nr,": Multiple t-tests: Local FDR")
 grid.arrange(plot_lfdr, 
-             top = textGrob(title,gp = gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
 ```
@@ -556,7 +556,7 @@ plot_pcr_auc2 <- ggplot(cvpcr_run2) +
 
 title <- paste0("Figure ",fig_nr,": Optimal number of PCs")
 grid.arrange(plot_pcr_auc1, plot_pcr_auc2, ncol = 2, 
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))     
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))     
 fig_nr <- fig_nr+1
 ```
 
@@ -580,7 +580,7 @@ plot_dens_pcr <- ggplot(pcr_train) +
 
 title <- paste0("Figure ",fig_nr,": PCR on ", nr_pc_opt2, " PCs - density")
 grid.arrange(plot_dens_pcr, 
-             top= textGrob(title, gp=gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr+1
 ```
 
