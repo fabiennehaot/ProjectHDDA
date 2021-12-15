@@ -65,7 +65,8 @@ ggplot(data = tb_summary) +
   geom_point(mapping = aes(x = Nr, y = MeanPerVar), col = 'green', size = .3) +
   geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = 'red', size = .3) +
   ggtitle("Figure 1: Data exploration") +
-  theme_bw()
+  theme_bw() +
+  theme(plot.title = element_text(size = 19))
 
 X <- scale(X_raw)
 ```
