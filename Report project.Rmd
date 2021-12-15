@@ -93,48 +93,52 @@ tb_scores <- tibble(PCA1 = Scores[, 1],
                     Object = rownames(Scores),
                     Rejected = as.factor(Y))
 
-ggplot(tb_scores) +
+p_scatter <- ggplot(tb_scores) +
   geom_point(mapping = aes(x = PCA1, y = PCA2, col = Rejected)) +
   scale_color_manual(values = c("accept" = "red", "reject" = "blue")) +
-  labs(title = "Figure 2: Scores for 2 PCA's") +
+  labs(title = "A Scores for 2 PCA's") +
   theme_bw()   
 
 p_dens <- ggplot(tb_scores) +
   geom_density(mapping=aes(x = PCA1 + PCA2, fill = Rejected),
                alpha = 0.5) +
-  labs(title = "Figure 3: Density for 2 PC's: densities") +
+  labs(title = "B Density for 2 PC's: densities") +
   scale_fill_manual(values = c('red', 'blue')) +
   theme_bw()  
 
-grid.arrange(p_scatter, p_dens, ncol = 2)
+grid.arrange(p_scatter, p_dens, ncol = 2, top = "Figure 2")
 ```
 
 The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
 
-To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look Figure 2. 
-We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 3
+To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look Figure 2 A. 
+We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 2B
 
 Next, it is interesting to get more information on which genes are driving the PCs. A lot of the PCs are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
 
 ```{r loadings, echo = FALSE, , fig.height = 5, fig.width = 10, fig.align = "center"}
-par(pch = 19, mfrow = c(1, 2))
-hist(V[, 1], breaks = 50, xlab = "PC 1 loadings", main = "Figure 4: Histogram PC 1 loadings")
+par(pch = 19, mfrow = c(1, 2), oma = c(0, 0, 2, 0))
+
+hist(V[, 1], breaks = 50, xlab = "PC 1 loadings", main = "A Histogram PC 1 loadings")
 abline(v = c(
   quantile(V[, 1], 0.05),
   quantile(V[, 1], 0.95)
 ), col = "red", lwd = 2)
 
-hist(V[, 2], breaks = 50, xlab = "PC 2 loadings", main = "Figure 5: Histogram PC 2 loadings")
+hist(V[, 2], breaks = 50, xlab = "PC 2 loadings", main = "B Histogram PC 2 loadings")
 abline(v = c(
   quantile(V[, 2], 0.05),
   quantile(V[, 2], 0.95)
 ), col = "red", lwd = 2)
+
+mtext("Figure 3", outer = TRUE, cex = 1.5)
 ```
 
-The histograms (Figures 4 and 5) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
+The histograms (Figures 3 A and B) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
 
 ```{r sparce PCA, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
-par(pch = 19, mfrow = c(1, 2))
+par(pch = 19, mfrow = c(1, 2), oma = c(0, 0, 2, 0))
+
 set.seed(45)
 fit_loadings1 <- cv.glmnet(X, Z[, 1],
                            alpha = 0.5, nfolds = 5)
@@ -154,16 +158,18 @@ par(mfrow = c(1, 2))
 cols <- c("0" = "red", "1" = "blue")
 plot(Z[, 1], Z[, 2],
      col = cols[Y], xlab = "PC1", ylab = "PC2", pch = 16,
-     main = "Figure 6:All genes \nfor PC1 and PC2"
+     main = "A All genes \nfor PC1 and PC2"
 )
 
 plot(SPC1, SPC2,
      col = cols[Y], xlab = "SPC1", ylab = "SPC2", pch = 16,
-     main = paste("Figure 7:", non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
+     main = paste("B", non_zero1, "genes for SPC1 \n and", non_zero2, "genes for SPC2")
 )
+
+mtext("Figure 4", outer = TRUE, cex = 1.5)
 ```
 
-For both PC1 and PC2 around 200 genes are important (Figure 7), which can provide more or less the same result as the PCA with all the genes (Figure 6).
+For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure 4A).
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures 8 and 9.
 
@@ -174,9 +180,11 @@ Vlda <- kidney.lda$scaling
 colnames(Vlda) <- paste0("V", 1:ncol(Vlda))
 Zlda <- X%*%Vlda
 colnames(Zlda) <- paste0("Z", 1:ncol(Zlda))
-par(mfrow = c(1, 2))
+
+par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
 boxplot(Zlda ~ Y, col = cols, ylab = expression("Z"[1]),
-        main = "Figure 8: LDA with total set of genes")
+        main = "A LDA with total set of genes")
+
 set.seed(45)
 lda_loadings <- cv.glmnet(X, Zlda, alpha = 0.5, nfolds = 5)
 
@@ -190,11 +198,13 @@ SLDA <- X %*% sparse_lda_loadings[-1]
 n_nonzero <- sum(sparse_lda_loadings != 0)
 boxplot(SLDA ~ Y,
         col = cols, ylab = "SLDA",
-        main = sprintf("Figure 9: LDA with subset of %d genes", n_nonzero)
+        main = sprintf("B LDA with subset of %d genes", n_nonzero)
 )
+
+mtext("Figure 5", outer = TRUE, cex = 1.5)
 ```
 
-Both the regular LDA (Figure 8) and the sparse LDA (Figure 9) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
+Both the regular LDA (Figure 5A) and the sparse LDA (Figure 5B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
 
 ## Hypothesis Testing 
 Some genes in the data set are an indicator for kidney rejection. In this section we look for genes which behave differently between the two groups. Since we do not know whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances. 
@@ -260,14 +270,14 @@ hist_pval <- ggplot(data = t_stats) +
   theme_bw()
 
 grid.arrange(hist_zval, hist_pval, ncol = 2,
-             top = "Figure 10: Multiple t-tests unadjusted")
+             top = "Figure 6: Multiple t-tests unadjusted")
 
 # number of differentiated genes
 table_p_nonadj <- table(t_stats$p_val < nonadj_level)
 nr_detected_nonadj <- as.numeric(table_p_nonadj['TRUE'])
 ```
 
-The standard normal curve is too narrow to fit the distribution (Figure 10A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 10B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedue now, because this uses the standard normal null distribution to calculate the FDR.
+The standard normal curve is too narrow to fit the distribution (Figure 10A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 6B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedue now, because this uses the standard normal null distribution to calculate the FDR.
 
 ```{r hyptest_fdr_padj, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 # adjusted p values
@@ -318,7 +328,7 @@ pp_adj <- t_stats %>%
 
 # show histogram z-values +  monotonous adjustment for the p-values
 grid.arrange(hist_fdr, hist_pscale, ncol=2,
-             top  = "Figure 11: Multiple t-tests: scaling and FDR-adjustment")
+             top  = "Figure 7: Multiple t-tests: scaling and FDR-adjustment")
 
 # number of detected genes
 table_p_adj <- table(t_stats$p_adj < fdr_level)
@@ -330,7 +340,7 @@ We  will use the local approach instead, where we assume that the observed histo
 
 ```{r localfdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 #local fdr
-fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A: histogram")  #add here maintitle and change title other plots?
+fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A: histogram")  #add here maintitle Figure 8 and change title other plots?
 prop_h0 <- fdr_x$fp0['mlest', 'p0']
 
 #control FDR for 10%
@@ -371,7 +381,7 @@ plot_lfdr <- ggplot(data_lfdr) +
   labs(x = 'z-value', y = 'density') +
   theme_bw()       
 
-grid.arrange(plot_lfdr, top = "Figure 12: Multiple t-tests: Local FDR")
+grid.arrange(plot_lfdr, top = "Figure 9: Multiple t-tests: Local FDR")
 
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
 ```
@@ -488,7 +498,7 @@ ggplot(cvpcr_run2) +
   labs(title = 'B cross validation PCR: steps of 1') +
   theme_bw() -> p2
 
-grid.arrange(p1, p2, ncol = 2, top = "Figure 14") # plot the 2 plots next to each other
+grid.arrange(p1, p2, ncol = 2, top = "Figure 10") # plot the 2 plots next to each other
 ```
 
 In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in. Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but wit steps of 1. This gives us an optimal number `r nr_pc_opt2` PCs.
@@ -506,31 +516,38 @@ pcr_train = tibble(pcr_score = pcr_model1$fitted.values,
 p_dens_pcr <- ggplot(pcr_train) +
   geom_density(mapping = aes(x = pcr_score, fill=rejection), 
                alpha = 0.5) +
-  labs(title = "Figure 15: Density for 2 PC's: densities") +
-  scale_fill_manual(values = c('firebrick', 'lightblue')) +
+  labs(title = "Figure 11: Density for 2 PC's: densities") +
+  scale_fill_manual(values = c('red', 'blue')) +
   theme_bw() 
 
 p_dens_pcr
 ```
 
 In the last step, a PCR model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
-When we plot the two densities of the accepted and rejected kidneys with this model, we clearly see there is no overlap. This means, the model is not acceptable enough. 
+When we plot the two densities of the accepted and rejected kidneys with this model (Figure 11), we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
 ### Lasso regression
 
 We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. The following figure clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
 
 
-```{r Lasso, echo = FALSE, fig.show = "hold", out.width = "50%"}
+```{r Lasso, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
+par(mfrow=c(1,2),oma = c(0, 0, 2, 0))
+
 # Lasso
-mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial")  # alpha = 1 -> Lasso
+mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial", 
+                 main = "A")  # alpha = 1 -> Lasso
 plot(mLasso, xvar = "lambda")
 
 # cross validation to find optimal lambda
 set.seed(44)
 K <- 10 # number of folds
-mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", type.measure = "auc", nfolds = K)
+mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", 
+                      main = "b",
+                      type.measure = "auc", nfolds = K)
 plot(mCvLasso)
+
+mtext("Figure 12", outer = TRUE, cex = 1.5)
 ```
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use 10-fold cross-validation because the data set is relatively small, and should therefore not take too much time. We optimize the area under the receiver characteristic curve (AUC).
@@ -549,7 +566,7 @@ mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, fam
 
 # with optimal lambda (largest auc) the output shows the non-zero estimated regression coefficients
 library(ggplot2)
-qplot(summary(coef(mLassoOpt))[-1,1],
+qplot(main = "Figure 13", summary(coef(mLassoOpt))[-1,1],
       summary(coef(mLassoOpt))[-1,3]) + xlab("gene") + ylab("beta-hat") + geom_hline(yintercept = 0, color = "red")
 
 #colnames(X_raw)[summary(coef(mLassoOpt))[[1]]]
@@ -565,7 +582,7 @@ We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and 
 ```{r ridge, echo = FALSE, out.width = "50%"}
 # Rigde regression
 mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
-plot(mRidge, xvar = "lambda")
+plot(mRidge, xvar = "lambda", main = "Figure 14")
 
 # Rigde regression with cross-validation
 set.seed(44)
@@ -600,7 +617,8 @@ roc <-
   geom_roc(n.cuts = 0) +
   xlab("1-specificity (FPR)") +
   ylab("sensitivity (TPR)")
-roc
+  
+print(roc + ggtitle("Figure 15"))
 
 #calc_auc(roc)
 ```
