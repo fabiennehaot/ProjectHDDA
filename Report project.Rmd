@@ -42,7 +42,7 @@ Y <- factor(Einecke2010Kidney[, 1],
 ```
 
 ## Exploration of the Data
-The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values.
+The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values. This figure also illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. 
 
 ```{r soundness checks, echo = FALSE}
 # missing values
