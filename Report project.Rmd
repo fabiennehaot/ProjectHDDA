@@ -101,7 +101,7 @@ plot_var <- ggplot()+
   labs(y = "Percent variance explained", x = "PCs")+
   theme_bw()
 
-title <- paste0("Figure ",fig_nr,": Variance explained by the first principal #components")
+title <- paste0("Figure ",fig_nr,": Variance explained by the first principal components")
 grid.arrange(plot_var,top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
@@ -205,7 +205,7 @@ fig_nr = fig_nr + 1
 ```
 
 
-For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-1`A). This subset of genes are the drivers of the majority of the variablity in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
+For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-3`). This subset of genes are the drivers of the majority of the variability in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
 
@@ -234,7 +234,7 @@ lda_box <- ggplot() +
   labs(title= 'A. LDA with total set of genes', y = 'Rejection status') +
   theme_bw()
 slda_box <- ggplot()+
-  geom_boxplot(mapping=aes(y = Zlda, groups=Y, fill=Y))+
+  geom_boxplot(mapping=aes(y = SLDA, groups=Y, fill=Y))+
   scale_fill_manual(values=fill_response)+
   labs(title= paste0("B. LDA with subset of ",n_nonzero, " genes"), 
        y = 'Rejection status') +
@@ -288,7 +288,7 @@ threshold_nonadj <- selected_nonadj %>%
 hist_zval <- ggplot(data = t_stats) + 
   geom_histogram(
     mapping = aes(x = z_val, after_stat(density)),
-    bins = 20, alpha = .7, fill = fill_blue) +
+    bins = 20, fill = fill_blue) +
   geom_vline(mapping = aes(xintercept = threshold_nonadj$left),
              color = col_red) +    
   geom_vline(mapping = aes(xintercept = threshold_nonadj$right), color = col_red) +
@@ -303,7 +303,7 @@ hist_zval <- ggplot(data = t_stats) +
 # signal histogram - current behaviour of p-values: uniform?
 hist_pval <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_val),
-                 fill = fill_red, bins = 20, alpha = .7) +
+                 fill = fill_red, bins = 20) +
   labs(title = 'B. Histogram of p-values', x = "p-value") +
   theme_bw()
 
@@ -338,14 +338,14 @@ threshold_fdr <- selected_fdr %>%
 
 hist_fdr <- ggplot(t_stats) + 
   geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
-                             fill = fill_blue, bins = 20, alpha = 0.7) +
+                             fill = fill_blue, bins = 20) +
   geom_vline(mapping = aes(xintercept = threshold_fdr$left),
              color = col_red) +    
   geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)),
             color = col_blue) +
   labs(title = 'A. Histogram of z-values') +
   geom_histogram(mapping = aes(x = z_scale, after_stat(density)),
-                             fill = fill_blue, bins = 20, alpha = .7) +
+                             fill = fill_blue, bins = 20) +
   geom_vline(mapping = aes(xintercept = threshold_fdr$left), color = col_red) +    
   geom_line(mapping = aes(x = z_scale, y = dnorm(z_scale)), color = col_blue) +
   theme_bw()            
@@ -378,8 +378,8 @@ table_p_adj <- table(t_stats$p_adj < fdr_level)
 nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 ```
 
-Standardizing the z-values does not help (Figure 8A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
-We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
+Standardizing the z-values does not help (Figure `r fig_nr-1`A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
+We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters of the Gaussian distributions will be estimated with maximum likelihood.  
 
 
 ```{r local_fdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
