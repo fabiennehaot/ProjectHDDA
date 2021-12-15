@@ -34,7 +34,7 @@ fig_nr <- 1
 
 # Executive Summary
 
-We investigated the claim that some genes are responsible for a patient’s likelihood of rejecting a kidney after transplantation. We started with an exploration of the data set by looking at the directions in the data space with the most variability, but this did not help us to make a distinction between the rejected and accepted cases. The variability in the data set does not appear to be related with kidney rejection. Next, we searched again for a linear combination of genes that succeeds in separating the two cases by using linear discriminant analysis. We noticed that we did not need all the genes. A subset of the total number of genes is enough to find a separation. This gives an indication that some genes are indeed associated with kidney rejection, while others are irrelevant. We continued our research by looking at which genes are differentially expressed between the two groups (by comparing means). We found 422 differentiated genes which are given in the appendix. From this result, we further assessed if kidney rejection can be predicted from the genes and this seemed to be the case. With only 12 genes, fairly-well predictions can be made (approximately 64% of the rejected kidneys could be predicted from these genes).
+We investigated the claim that some genes are responsible for a patient’s likelihood of rejecting a kidney after transplantation. We started with an exploration of the data set by looking at the directions in the data space with the most variability, but this did not help us to make a distinction between the rejected and accepted cases. The variability in the data set does not appear to be related with kidney rejection. Next, we searched again for a linear combination of genes that succeeds in separating the two cases by using linear discriminant analysis. We noticed that we did not need all the genes. A subset of the total number of genes is enough to find a separation. This gives an indication that some genes are indeed associated with kidney rejection, while others are irrelevant. We continued our research by looking at which genes are differentially expressed between the two groups (by comparing means). We found 422 differentiated genes which are given in the appendix. From this result, we further assessed if kidney rejection can be predicted from the genes and this seemed to be the case. With only 12 genes, fairly-well predictions can be made (approximately 68% of the rejected kidneys could be predicted from these genes).
 
 # Technical Report
 
@@ -134,9 +134,7 @@ fig_nr <- fig_nr + 1
 The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
 
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure `r fig_nr-1`A. 
-
 We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. Figure `r fig_nr-1`B confirms this observation by illustrating that the density curve of the rejected cases (blue) is situated where the values for PC1 and PC2 are low, which corresponds to the bottom left corner of Figure `r fig_nr-1`A. On the other hand, the density curve of the accepted cases (red) is situated where PC1 and PC2 are higher, which corresponds to the top right corner.
-
 
 Next, it is interesting to get more information on which genes are driving the PCs. A lot of the PCs are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
 
@@ -207,8 +205,7 @@ fig_nr = fig_nr + 1
 ```
 
 
-
-For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-2`). This subset of genes are the drivers of the majority of the variablity in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
+For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-1`A). This subset of genes are the drivers of the majority of the variablity in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
 
@@ -381,7 +378,7 @@ table_p_adj <- table(t_stats$p_adj < fdr_level)
 nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 ```
 
-Standardizing the z-values does not help (Figure `r fig_nr-1`.A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
+Standardizing the z-values does not help (Figure 7.A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
 
 
@@ -505,7 +502,7 @@ full_model_cv <- suppressMessages(cv.glm(
 full_model_cv$delta[1] 
 ```
 
-First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divided into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
+First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divided into 9 approximately equal subsets.  We use 9 folds because the data set is relatively small, and this should therefore not take too much time.Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
 
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
@@ -607,7 +604,7 @@ plot(mLasso, xvar = "lambda")
 
 # cross validation to find optimal lambda
 set.seed(44)
-K <- 10 # number of folds
+K <- 9 # number of folds
 mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), 
                       alpha = 1, family  = "binomial", 
                       type.measure = "auc", nfolds = K)
@@ -619,7 +616,7 @@ mtext("B. Choosing optimal lambda", adj = 0.7, outer = TRUE, cex = 1, line = 0)
 fig_nr <- fig_nr +1
 ```
 
-To make a decision about $\lambda$, cross-validation is used on the training data set. We use 10-fold cross-validation because the data set is relatively small, and should therefore not take too much time. We optimize the area under the receiver characteristic curve (AUC).
+To make a decision about $\lambda$, cross-validation is used on the training data set. We use again 9-fold cross-validation as in PCR. We optimize the area under the receiver characteristic curve (AUC).
 
 Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown on figure `r fig_nr` and next to this figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
 
