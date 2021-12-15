@@ -113,7 +113,7 @@ grid.arrange(p_scatter, p_dens, ncol = 2, top = textGrob("Figure 2: Principal co
 
 The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
 
-To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look Figure 2A. We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 2B
+To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure 2.A. We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 2B
 
 Next, it is interesting to get more information on which genes are driving the PCs. A lot of the PCs are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
 
@@ -135,7 +135,7 @@ abline(v = c(
 mtext("Figure 3: Loadings", outer = TRUE, cex = 1.5)
 ```
 
-The histograms (Figures 3A and 3B) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
+The histograms (Figures 3.A and 3.B) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
 
 ```{r sparce PCA, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 par(pch = 19, mfrow = c(1, 2), oma = c(0, 0, 2, 0))
@@ -170,9 +170,9 @@ plot(SPC1, SPC2,
 mtext("Figure 4: Visualization of the first two PCs", outer = TRUE, cex = 1.5)
 ```
 
-For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure 4A).
+For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure 4.A).
 
-Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures 5A and B.
+Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures 5.A and 5.B.
 
 ```{r LDA, warning = FALSE, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 kidney.lda <- MASS::lda(x = X, grouping = Y)
@@ -204,7 +204,7 @@ boxplot(SLDA ~ Y,
 mtext("Figure 5: Linear discriminant analysis", outer = TRUE, cex = 1.5)
 ```
 
-Both the regular LDA (Figure 5A) and the sparse LDA (Figure 5B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
+Both the regular LDA (Figure 5.A) and the sparse LDA (Figure 5.B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
 
 ## Hypothesis Testing 
 
@@ -278,7 +278,7 @@ table_p_nonadj <- table(t_stats$p_val < nonadj_level)
 nr_detected_nonadj <- as.numeric(table_p_nonadj['TRUE'])
 ```
 
-The standard normal curve is too narrow to fit the distribution (Figure 10A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 6B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedue now, because this uses the standard normal null distribution to calculate the FDR.
+The standard normal curve is too narrow to fit the distribution (Figure 6.A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 6.B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedure now, because this uses the standard normal null distribution to calculate the FDR.
 
 ```{r hyptest_fdr_padj, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 # adjusted p values
@@ -337,7 +337,7 @@ table_p_adj <- table(t_stats$p_adj < fdr_level)
 nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 ```
 
-Standardizing the z-values does not help (Figure 7A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
+Standardizing the z-values does not help (Figure 7.A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
 
 ```{r localfdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
@@ -514,7 +514,7 @@ grid.arrange(p1, p2, ncol = 2, top = textGrob("Figure 10: Optimal number of PCs"
                              gp = gpar(fontsize = 19)))
 ```
 
-In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in (Figure 10A). Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but with steps of 1 (Figure 10B). This gives us an optimal number of `r nr_pc_opt2` PCs.
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in (Figure 10.A). Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but with steps of 1 (Figure 10.B). This gives us an optimal number of `r nr_pc_opt2` PCs.
 
 ```{r PCRfinal, echo = FALSE, warning = FALSE, fig.align = "center"}
 pca <- prcomp(trainX)
@@ -542,7 +542,7 @@ When we plot the two densities of the accepted and rejected kidneys with this mo
 
 ### Lasso regression
 
-We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. Figure 12A clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
+We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. Figure 12.A clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
 
 
 ```{r Lasso, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
@@ -567,7 +567,7 @@ mtext("B. Choosing optimal lambda", adj = 0.7, outer = TRUE, cex = 1, line = 0)
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use 10-fold cross-validation because the data set is relatively small, and should therefore not take too much time. We optimize the area under the receiver characteristic curve (AUC).
 
-Two vertical lines are added on figure 12B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown on figure 13 and next to this figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
+Two vertical lines are added on figure 12.B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown on figure 13 and next to this figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
 
 ```{r Lasso optimal, echo = FALSE, out.width = "50%"}
 # Lasso with optimal lambda
