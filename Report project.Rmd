@@ -341,7 +341,7 @@ Standardizing the z-values does not help (Figure 7A), the theoretical distributi
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
 
 ```{r localfdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
-par(mfrow = c(1, 2), oma = c(0, 0, 2, 0))
+par(mfrow = c(1, 2), oma = c(0, 0, 4, 0))
 
 #local fdr
 fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A. Histogram")  # change title other plots?
