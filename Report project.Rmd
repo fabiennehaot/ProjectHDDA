@@ -346,7 +346,7 @@ par(mfrow = c(1, 2), oma = c(0, 0, 4, 0))
 #local fdr
 fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A. Histogram")  # change title other plots?
 prop_h0 <- fdr_x$fp0['mlest', 'p0']
-mtext("Figure 7: Local FDR", line = 1, outer = TRUE, cex = 1.5, side = 3)
+mtext("Figure 8: Local FDR", line = 1, outer = TRUE, cex = 1.5, side = 3)
 
 #control FDR for 10%
 FDR_left <- fdr_x$mat[, 'Fdrleft']
