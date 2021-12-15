@@ -512,7 +512,7 @@ ggplot(cvpcr_run2) +
 
 grid.arrange(p1, p2, ncol = 2, top = textGrob("Figure 10: Optimal number of PCs",
                              gp = gpar(fontsize = 19)))
- ```
+```
 
 In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in (Figure 10A). Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but with steps of 1 (Figure 10B). This gives us an optimal number of `r nr_pc_opt2` PCs.
 
