@@ -21,19 +21,15 @@ library(plotROC)
 library(ggplot2)
 library(gridExtra)
 library(grid)
-<<<<<<< HEAD
 
 # graphical parameters
 fill_blue = "lightblue"; fill_red = "firebrick"
 col_blue = "blue"; col_red = "red"; col_green = "green"
 col_response <- c("accept" = col_red, "reject" = col_blue)
 fill_response <- c("accept" = fill_red, "reject" = fill_blue)
-cex_txt <- 1; loc_txt <- 3; adj_txt <- 0.5; padj_txt <- 0
-
+cex_txt <- 1.5; loc_txt <- 3; adj_txt <- 0.5; padj_txt <- 0
+size_txt <- 19
 fig_nr <- 1
-=======
-library(ggplot2)
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 ```
 
 # Executive Summary
@@ -79,7 +75,9 @@ plot_first_view <- ggplot(data = tb_summary) +
   geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = col_red, size = .3) +
   theme_bw() 
   
-grid.arrange(plot_first_view,top= paste0("Figure ",fig_nr,": Data exploration"))
+title <- paste0("Figure ",fig_nr,": Data exploration")
+grid.arrange(plot_first_view,
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 X <- scale(X_raw)
 ```
@@ -103,7 +101,8 @@ plot_var <- ggplot()+
   labs(y = "Percent variance explained", x = "PCs")+
   theme_bw()
 
-grid.arrange(plot_var,top= paste0("Figure ",fig_nr,": Variance explained by the first principal components"))
+title <- paste0("Figure ",fig_nr,": Variance explained by the first principal #components")
+grid.arrange(plot_var,top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 Scores <- X %*% svd_x$v
@@ -124,27 +123,18 @@ p_dens <- ggplot(tb_scores) +
   labs(title = "B. Density for 2 PCs") +
   scale_fill_manual(values = fill_response) +
   theme_bw()  
-<<<<<<< HEAD
 
+title <- paste0("Figure ",fig_nr,": Principal component analysis")
 grid.arrange(p_scatter, p_dens, ncol = 2,
-             top= paste0("Figure ",fig_nr,": Principal component analysis"))
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
-=======
-  
-grid.arrange(p_scatter, p_dens, ncol = 2, top = textGrob("Figure 2: Principal component analysis", 
-                                                       gp = gpar(fontsize = 19)))
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 ```
 
 The first 2 PCs explain 19% of the variability of X and with the first 50 we obtain 63% of the variability of X. 
 
-<<<<<<< HEAD
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure `r fig_nr-1`A. 
 We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. Figure `r fig_nr-1`B confirms this observation.
-=======
-To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure 2.A. We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. + interpretation figure 2B
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
 Next, it is interesting to get more information on which genes are driving the PCs. A lot of the PCs are very small (near zero) and therefore, we create a histogram of the loadings to get a better visualization of these loadings.
 
@@ -166,8 +156,9 @@ hist_loading2 <- ggplot(tb_loadings)+
   labs(title = 'B. Histogram PC 2 loadings', x = 'Loading', y = 'Frequency')+
   theme_bw()
 
+title <- paste0("Figure ",fig_nr,": Histogram for PC-loadings")
 grid.arrange(hist_loading1, hist_loading2, ncol = 2,
-             top= paste0("Figure ",fig_nr,": Histogram for PC-loadings"))
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 ```
@@ -191,7 +182,6 @@ non_zero2 <- sum(abs(sparse_loadings2[-1]) > 0)
 SPC1 <- X %*% sparse_loadings1[-1] # without the intercept
 SPC2 <- X %*% sparse_loadings2[-1] # without the intercept
 
-<<<<<<< HEAD
 tb_sparse_pca <- tibble(SPC1, SPC2, 
                         Rejected = as.factor(Y))
 p_scatter_sparse <- ggplot(tb_sparse_pca) +
@@ -206,35 +196,18 @@ p_dens_sparse <- ggplot(tb_scores) +
                alpha = 0.5) +
   labs(title = "B. Density for sparse PCs") +
   scale_fill_manual(values = fill_response) +
-  theme_bw()  
-=======
-par(mfrow = c(1, 2))
-cols <- c("0" = "red", "1" = "blue")
-plot(Z[, 1], Z[, 2],
-     col = cols[Y], xlab = "PC1", ylab = "PC2", pch = 16,
-     main = "A. All genes for PC1 and PC2"
-)
+  theme_bw()
 
-plot(SPC1, SPC2,
-     col = cols[Y], xlab = "SPC1", ylab = "SPC2", pch = 16,
-     main = paste("B.", non_zero1, "genes for SPC1 and", non_zero2, "genes for SPC2")
-)
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
-
+title <- paste0("Figure ",fig_nr,": Visualization of the first two sparse PCs")
 grid.arrange(p_scatter_sparse, p_dens_sparse, ncol = 2, 
-             top = paste0("Figure ",fig_nr,": Visualization of the first two sparse PCs"))
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 ```
 
-<<<<<<< HEAD
-For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`B), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-1`A).
 
-Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and B.
-=======
-For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure 4.A).
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+For both PC1 and PC2 around 200 genes are important (Figure 4B), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-1`A).
 
-Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures 5.A and 5.B.
+Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
 
 ```{r LDA, warning = FALSE, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 kidney.lda <- MASS::lda(x = X, grouping = Y)
@@ -267,24 +240,17 @@ slda_box <- ggplot()+
        y = 'Rejection status') +
   theme_bw()
 
-
-grid.arrange(lda_box, slda_box, ncol = 2, 
-             top = paste0("Figure ",fig_nr,": Linear discriminant analysis"))
+title <- paste0("Figure ",fig_nr,": Linear discriminant analysis")
+grid.arrange(lda_box, slda_box, ncol = 2,              
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 
 ```
 
-<<<<<<< HEAD
 Both the regular LDA (Figure `r fig_nr-1`A) and the sparse LDA (Figure `r fig_nr-1`B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
 
 ## Hypothesis Testing
 
-=======
-Both the regular LDA (Figure 5.A) and the sparse LDA (Figure 5.B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
-
-## Hypothesis Testing 
-
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 Some genes in the data set are an indicator for kidney rejection. In this section we look for genes which behave differently between the two groups. Since we do not know whether differentiated genes will show higher or lower intensities we opt for 2 sided t-tests with unequal variances. 
 \[H_0: \mu_{normal}(gene) = \mu_{reject}(gene) \]
 \[H_1: \mu_{normal}(gene) \neq \mu_{reject}(gene) \]
@@ -292,8 +258,6 @@ Some genes in the data set are an indicator for kidney rejection. In this sectio
 Because we are performing multiple testing we will adjust our p-values, the FDR will be controlled on 10%.
 
 ```{r hyptest_tttests, echo = FALSE}
-
-
 gene_data <- as.matrix(X_raw)
 group <- Y
 # non adjusted p-values 
@@ -343,24 +307,18 @@ hist_pval <- ggplot(data = t_stats) +
   labs(title = 'B. Histogram of p-values', x = "p-value") +
   theme_bw()
 
-grid.arrange(hist_zval, hist_pval, ncol = 2,
-<<<<<<< HEAD
-             top = paste0("Figure ",fig_nr,": Multiple t-tests unadjusted"))
+title <- paste0("Figure ",fig_nr,": Multiple t-tests unadjusted")
+grid.arrange(hist_zval, hist_pval, ncol = 2,          
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
-=======
-             top = textGrob("Figure 6: Multiple t-tests unadjusted", gp = gpar(fontsize = 19)))
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+
 
 # number of differentiated genes
 table_p_nonadj <- table(t_stats$p_val < nonadj_level)
 nr_detected_nonadj <- as.numeric(table_p_nonadj['TRUE'])
 ```
 
-<<<<<<< HEAD
-The standard normal curve is too narrow to fit the distribution (Figure `r fig_nr-1`A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure `r fig_nr-1`B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedue now, because this uses the standard normal null distribution to calculate the FDR.
-=======
-The standard normal curve is too narrow to fit the distribution (Figure 6.A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure 6.B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedure now, because this uses the standard normal null distribution to calculate the FDR.
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+The standard normal curve is too narrow to fit the distribution (Figure `r fig_nr-1`A). This can happen when the genes are highly correlated or when the null hypothesis does not hold. The histogram of the p-values (Figure `r fig_nr-1`B) shows a clear peak for p-values lower than 5%, but there are too many p-values between 5% and 35%. We cannot execute the @BH:1995 procedure now, because this uses the standard normal null distribution to calculate the FDR.
 
 ```{r hyptest_fdr_padj, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 # adjusted p values
@@ -410,14 +368,10 @@ pp_adj <- t_stats %>%
   theme_bw()
 
 # show histogram z-values +  monotonous adjustment for the p-values
+title <- paste0("Figure ",fig_nr,": Multiple t-tests: scaling and FDR-adjustment")
 grid.arrange(hist_fdr, hist_pscale, ncol=2,
-<<<<<<< HEAD
-             top = paste0("Figure ",fig_nr,": Multiple t-tests: scaling and FDR-adjustment"))
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
-=======
-              top = textGrob("Figure 7: Multiple t-tests: scaling and FDR-adjustment",
-                             gp = gpar(fontsize = 19)))
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
 # number of detected genes
 table_p_adj <- table(t_stats$p_adj < fdr_level)
@@ -427,27 +381,16 @@ nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 Standardizing the z-values does not help (Figure 7.A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters  of the Gaussian distributions will be estimated with maximum likelihood.  
 
-<<<<<<< HEAD
 
 ```{r local_fdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 #local fdr
 par(mfrow=c(1,1), omi = c(0, 0, 2, 0), oma = c(0, 0, 1, 0))
-fdr_x <- locfdr(t_stats$z_val, plot = 4, main="histogram")
+fdr_x <- locfdr(t_stats$z_val, plot = 4, main= "histogram")
 mtext(paste0("Figure ", fig_nr,": Local false discovery rate"),
       outer=TRUE, adj=adj_txt, side=loc_txt, cex=cex_txt, padj=padj_txt)
 fig_nr <- fig_nr + 1
 
 prop_h0 <- fdr_x$fp0['mlest', 'p0']
-
-=======
-```{r localfdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
-par(mfrow = c(1, 2), oma = c(0, 0, 4, 0))
-
-#local fdr
-fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "A. Histogram")  # change title other plots?
-prop_h0 <- fdr_x$fp0['mlest', 'p0']
-mtext("Figure 8: Local FDR", line = 1, outer = TRUE, cex = 1.5, side = 3)
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
 #control FDR for 10%
 FDR_left <- fdr_x$mat[, 'Fdrleft']
@@ -487,17 +430,11 @@ plot_lfdr <- ggplot(data_lfdr) +
             col = col_blue) +
   labs(x = 'z-value', y = 'density') +
   theme_bw()       
-<<<<<<< HEAD
 
+title <- paste0("Figure ",fig_nr,": Multiple t-tests: Local FDR")
 grid.arrange(plot_lfdr, 
-             top = paste0("Figure ",fig_nr,": Multiple t-tests: Local FDR"))
+             top = textGrob(title,gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
-=======
-  
-grid.arrange(plot_lfdr, top = textGrob("Figure 9: Multiple t-tests: Local FDR",
-                             gp = gpar(fontsize = 19)))
-
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 lfdr_genes <- t_stats %>% filter(lfdr < lfdr_level)%>% .$gene
 
 ```
@@ -564,12 +501,9 @@ full_model_cv <- suppressMessages(cv.glm(
 
 full_model_cv$delta[1] 
 ```
-<<<<<<< HEAD
-First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divided into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
-=======
 
-First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divived into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divided into 9 approximately equal subsets. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
+
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 auc_cv_glm <- function(trials, data, folds){
@@ -603,21 +537,11 @@ trials <- seq(1, nrow(fit_data), 10)
 folds <- 9
 cvpcr_run1 <- auc_cv_glm(trials, fit_data, folds)
 nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc # largest AUC for this number of PCs
-<<<<<<< HEAD
 plot_pcr_auc1 <- ggplot(cvpcr_run1) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = col_blue) +
   geom_vline(mapping = aes(xintercept = nr_pc_opt1), col = col_red)+
   labs(title = 'A. Cross validation PCR: steps of 10')+
   theme_bw() 
-=======
-
-ggplot(cvpcr_run1) +
-  geom_line(mapping = aes(x = nr_of_pc, y = auc), col = 'blue') +
-  geom_vline(mapping = aes(xintercept = nr_pc_opt1), col = 'firebrick') +
-  labs(title = 'A. Cross validation PCR: steps of 10') +
-  xlab("Number of PCs") +
-  theme_bw() -> p1
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
 # zoom in: small steps(1) - same seed
 set.seed(42)
@@ -629,22 +553,15 @@ plot_pcr_auc2 <- ggplot(cvpcr_run2) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = col_blue)+
   geom_vline(mapping = aes(xintercept = nr_pc_opt2), col = col_red)+
   labs(title = 'B. Cross validation PCR: steps of 1') +
-<<<<<<< HEAD
   theme_bw() 
 
+title <- paste0("Figure ",fig_nr,": Optimal number of PCs")
 grid.arrange(plot_pcr_auc1, plot_pcr_auc2, ncol = 2, 
-             top = paste0("Figure ",fig_nr,": Optimal number of PCs")) # plot the 2
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))     
 fig_nr <- fig_nr+1
-=======
-  xlab("Number of PCs") +
-  theme_bw() -> p2
-
-grid.arrange(p1, p2, ncol = 2, top = textGrob("Figure 10: Optimal number of PCs",
-                             gp = gpar(fontsize = 19)))
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 ```
 
-In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in (Figure 10.A). Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but with steps of 1 (Figure 10.B). This gives us an optimal number of `r nr_pc_opt2` PCs.
+In a second step, we loop and repeat this for each PC. First, we loop over the 175 PCs, in steps of 10, to decide in which region we will zoom in (Figure `r fig_nr -1`A). Here, we get `r nr_pc_opt1` as optimal number of PCs. To get a more accurate look, we zoom in between 1 and 20 PCs and repeat the same process, but with steps of 1 (Figure `r fig_nr-1`B). This gives us an optimal number of `r nr_pc_opt2` PCs.
 
 ```{r PCRfinal, echo = FALSE, warning = FALSE, fig.align = "center"}
 pca <- prcomp(trainX)
@@ -659,19 +576,12 @@ pcr_train = tibble(pcr_score = pcr_model1$fitted.values,
 plot_dens_pcr <- ggplot(pcr_train) +
   geom_density(mapping = aes(x = pcr_score, fill=rejection), 
                alpha = 0.5) +
-<<<<<<< HEAD
-  labs(title = "A. Density for PCR") +
   scale_fill_manual(values = fill_response) +
   theme_bw() 
-=======
-  labs(title = "Figure 11: Density for 2 PCs: densities") +
-  scale_fill_manual(values = c('red', 'blue')) +
-  theme_bw() +
-  theme(plot.title = element_text(size = 19))
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
+title <- paste0("Figure ",fig_nr,": PCR on ", nr_pc_opt2, " PCs - density")
 grid.arrange(plot_dens_pcr, 
-             top = paste0("Figure ",fig_nr,": PCR on ", nr_pc_opt2, " PCs")) # plot 
+             top= textGrob(title, gp=gpar(fontsize = size_txt)))
 fig_nr <- fig_nr+1
 ```
 
@@ -688,12 +598,9 @@ par(mfrow=c(1,2), oma = c(0, 0, 5, 0))
 
 # Lasso
 mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial")  # alpha = 1 -> Lasso
-<<<<<<< HEAD
-plot(mLasso, xvar = "lambda", main = "A. Coefficients in lasso regression\n")
-=======
+
 plot(mLasso, xvar = "lambda")
 #title("A. Coefficients in lasso regression", line = 2)
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
 # cross validation to find optimal lambda
 set.seed(44)
@@ -701,19 +608,12 @@ K <- 10 # number of folds
 mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), 
                       alpha = 1, family  = "binomial", 
                       type.measure = "auc", nfolds = K)
-<<<<<<< HEAD
-plot(mCvLasso, main = "B. Choosing optimal lambda\n")
-
-mtext(paste0("Figure ",fig_nr, ": Lasso regression"), outer = TRUE, 
-             cex = cex_txt, side = loc_txt, adj = adj_txt)
-fig_nr <- fig_nr +1
-=======
 plot(mCvLasso)
-
-mtext("Figure 12: Lasso regression", outer = TRUE, cex = 1.5, line = 3)
+title <- paste0("Figure ",fig_nr,": Lasso regression")
+mtext(title, outer = TRUE, cex = cex_txt, line = 3)
 mtext("A. Coefficients in lasso regression", adj = 0.1, outer = TRUE, cex = 1, line = 0)
 mtext("B. Choosing optimal lambda", adj = 0.7, outer = TRUE, cex = 1, line = 0)
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+fig_nr <- fig_nr +1
 ```
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use 10-fold cross-validation because the data set is relatively small, and should therefore not take too much time. We optimize the area under the receiver characteristic curve (AUC).
@@ -727,11 +627,11 @@ id_lambda_cv <- which(mCvLasso$lambda == lambda_cv)
 auc_lasso <- mCvLasso$cvm[id_lambda_cv]
 
 # Optimal model 
-mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 1, family  = "binomial", lambda = lambda_cv)
+mLassoOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), 
+                    alpha = 1, family  = "binomial", lambda = lambda_cv)
 #summary(coef(mLassoOpt))
 
 # with optimal lambda (largest auc) the output shows the non-zero estimated regression coefficients
-<<<<<<< HEAD
 
 summ_mLassoOpt <- summary(coef(mLassoOpt))
 tb_genes_mLassoOpt <- as_tibble(summ_mLassoOpt) %>%
@@ -744,47 +644,29 @@ lasso_genes <- ggplot(tb_genes_mLassoOpt) +
   geom_text(mapping=aes(x=gene,y=beta_hat,label=namegene))+
   geom_hline(yintercept = 0, color = col_red)+
   theme_bw()
-grid.arrange(lasso_genes, 
-             top = paste0("Figure ",fig_nr,": Estimated coefficients Lasso"))
-fig_nr <- fig_nr + 1
-=======
-qplot(main = "Figure 13: Estimated coefficients", summary(coef(mLassoOpt))[-1,1],
-      summary(coef(mLassoOpt))[-1,3]) + xlab("gene") + ylab("beta-hat") + 
-      geom_hline(yintercept = 0, color = "red") + 
-      theme(plot.title = element_text(size = 19))
 
-#colnames(X_raw)[summary(coef(mLassoOpt))[[1]]]
-grid.newpage()
-grid.table(colnames(X_raw)[summary(coef(mLassoOpt))[[1]]], theme = ttheme_minimal())
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+title <- paste0("Figure ",fig_nr,": Estimated coefficients Lasso")
+grid.arrange(lasso_genes, 
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
+fig_nr <- fig_nr + 1
 ```
 
 We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and AUC `r round(auc_lasso,2)` on the training data set, which is relatively high.
 
 ### Ridge regression
 
-<<<<<<< HEAD
+
 ```{r ridge, echo = FALSE, out.width = "50%",fig.align = "center"}
-# Ridge regression
-par(mfrow=c(1,1), omi = c(0, 0, 2, 0),oma = c(0, 0, 1, 0))
-mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
-plot(mRidge, xvar = "lambda")
-mtext(paste0("Figure ",fig_nr, ": Coefficients ridge regression"), outer = TRUE, 
-             cex = cex_txt, side = loc_txt, adj = adj_txt)
-fig_nr <- fig_nr + 1
-# Ridge regression with cross-validation
-=======
-```{r ridge, echo = FALSE, out.width = "50%"}
 par(oma = c(0, 0, 3, 0))
 
-# Rigde regression
+# Ridge regression
 mRidge <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial")
+title <- paste0("Figure ",fig_nr, ": Coefficients ridge regression")
 plot(mRidge, xvar = "lambda")
+mtext(title, outer = TRUE, cex = cex_txt, line = 1)
+fig_nr <- fig_nr +1
 
-mtext("Figure 14: Coefficients ridge regression", outer = TRUE, cex = 1.5, line = 1)
-
-# Rigde regression with cross-validation
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
+# Ridge regression with cross-validation
 set.seed(44)
 mCvRidge <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, family  = "binomial", type.measure = "auc", nfolds = K) # alpha = 0 -> ridge
 #plot(mCvRidge)
@@ -802,7 +684,7 @@ The last model that we fit on the training data is the ridge regression model th
 ## Model evaluation
 
 We decide to continue our analysis with the optimal Lasso regression model because it has the highest AUC value of the 3 implemented models and because it is easier to interpret as it does feature selection.
-Next, we evaluate this final model on our test set. First, the corresponding ROC curve is examined (Figure 15). Our model clearly performs better than random allocation of cases to the 2 groups.
+Next, we evaluate this final model on our test set. First, the corresponding ROC curve is examined (Figure `r fig_nr`). Our model clearly performs better than random allocation of cases to the 2 groups.
 
 ```{r rocLasso, echo = FALSE,  out.width = "50%", warning = FALSE,fig.align = "center"}
 # plot roc curve for Lasso
@@ -817,14 +699,11 @@ roc <-
   xlab("1-specificity (FPR)") +
   ylab("sensitivity (TPR)")+
   theme_bw()
-  
-<<<<<<< HEAD
+
+title = paste0("Figure ",fig_nr,": ROC curve")  
 grid.arrange(roc, 
-             top = paste0("Figure ",fig_nr,": ROC curve"))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
-=======
-print(roc + ggtitle("Figure 15: ROC curve") + theme(plot.title = element_text(size = 19)))
->>>>>>> 6933cd47ed227cafe0a25ffef01b897568c26630
 
 ```
 
