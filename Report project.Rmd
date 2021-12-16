@@ -590,7 +590,7 @@ fig_nr <- fig_nr+1
 ```
 
 In the last step, a PCR model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
-When we plot the two densities of the accepted and rejected kidneys with this model (Figure `r fig_nr`), we clearly see there is no overlap. This means, the model is not acceptable enough. 
+When we plot the two densities of the accepted and rejected kidneys with this model (Figure `r fig_nr`), we see an overlap between the 2 rejection status. This means, that based on this model, the predictions made will not be good. 
 
 ### Lasso regression
 
