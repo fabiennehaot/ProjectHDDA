@@ -47,7 +47,7 @@ Y <- factor(Einecke2010Kidney[, 1],
 ```
 
 ## Exploration of the Data
-The data exploration was started with examining the Einecke 2010 kidney data [@einecke:2010]. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that two clouds and the mean are formed for the three values. This figure also illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. 
+The data exploration was started with examining the Einecke 2010 kidney data [@einecke:2010]. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that two clouds and a flat mean are formed for the three values. This figure also illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. 
 
 ```{r soundness_checks, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 # missing values
@@ -235,14 +235,15 @@ n_nonzero <- sum(sparse_lda_loadings != 0)
 lda_box <- ggplot() +
   geom_boxplot(mapping = aes(y = Zlda, groups = Y, fill = Y)) +
   scale_fill_manual(values = fill_response) +
-  labs(title = 'A. LDA with total set of genes', y = 'Rejection status') +
+  labs(title = 'A. LDA with total set of genes', 
+       x = 'Rejection status', y = "SLDA-score") +
   theme_bw()
 
 slda_box <- ggplot() +
   geom_boxplot(mapping = aes(y = SLDA, groups = Y, fill = Y)) +
   scale_fill_manual(values = fill_response) +
   labs(title = paste0("B. LDA with subset of ",n_nonzero, " genes"), 
-       y = 'Rejection status') +
+       x = 'Rejection status', y = "SLDA-score") +
   theme_bw()
 
 title <- paste0("Figure ", fig_nr,": Linear discriminant analysis")
@@ -358,7 +359,7 @@ hist_fdr <- ggplot(t_stats) +
 # signal histogram - current behaviour of p-values: uniform?
 hist_pscale <- ggplot(data = t_stats) +
   geom_histogram(mapping = aes(x = p_scale),
-                 fill = fill_red, bins = 20, alpha = 0.7) +
+                 fill = fill_red, bins = 20) +
   labs(title = 'B. Histogram of p-values') +
   theme_bw()
 
@@ -544,7 +545,7 @@ nr_pc_opt1 <- cvpcr_run1 %>% filter(auc == max(auc)) %>% .$nr_of_pc # largest AU
 plot_pcr_auc1 <- ggplot(cvpcr_run1) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = col_blue) +
   geom_vline(mapping = aes(xintercept = nr_pc_opt1), col = col_red) +
-  labs(title = 'A. Cross validation PCR: steps of 10') +
+  labs(title = 'A. Cross-validation PCR: steps of 10') +
   theme_bw() 
 
 # zoom in: small steps(1) - same seed
@@ -556,7 +557,7 @@ nr_pc_opt2 <- cvpcr_run2 %>% filter(auc == max(auc)) %>% .$nr_of_pc  #largest AU
 plot_pcr_auc2 <- ggplot(cvpcr_run2) +
   geom_line(mapping = aes(x = nr_of_pc, y = auc), col = col_blue) +
   geom_vline(mapping = aes(xintercept = nr_pc_opt2), col = col_red) +
-  labs(title = 'B. Cross validation PCR: steps of 1') +
+  labs(title = 'B. Cross-validation PCR: steps of 1') +
   theme_bw() 
 
 title <- paste0("Figure ", fig_nr, ": Optimal number of PCs")
@@ -592,6 +593,29 @@ fig_nr <- fig_nr+1
 In the last step, a PCR model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
 When we plot the two densities of the accepted and rejected kidneys with this model (Figure `r fig_nr`), we clearly see there is no overlap. This means, the model is not acceptable enough. 
 
+```{r sparse_pcr}
+set.seed(45)
+Zk_sparse <- matrix(0, nrow = nrow(trainX), ncol = nrow(trainX))
+sparse_loadings = matrix(0, nrow = ncol(trainX)+1, ncol = nr_pc_opt2)
+trainX_mat <- as.matrix(trainX)
+for (k in 1:nr_pc_opt2){
+  fit_loadings <- cv.glmnet(trainX_mat, Zk[, k], alpha = 0.5, nfolds = 5)
+  sparse_loadings[,k] <- as.vector(coef(fit_loadings, 
+                                    s = fit_loadings$lambda.1se))
+  Zk_sparse[, k] <- trainX_mat %*% sparse_loadings[-1,k] # no intercept
+  }
+
+sparse_pcr_model <- glm(trainY ~ Zk_sparse, family = "binomial")
+sparse_pcr_train <-  tibble(spcr_score = sparse_pcr_model$fitted.values, 
+                                       rejection = trainY)
+auc_sparse_pcr <- auc(roc(sparse_pcr_train, response = 'rejection', predictor = 'spcr_score'))
+
+is_gene_used <- rowSums(sparse_loadings[,-1]!=0)
+nr_used_genes <- sum(is_gene_used)
+```
+
+Since we want to make predictions on a subset of the genes, we constructed the sparse version of this model. The sparse PCR model still shows a high performance with an auc of `r round(100*auc_sparse_pcr,2)`%. In total '`r nr_used_genes` genes are used in this model.
+
 ### Lasso regression
 
 We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. Figure `r fig_nr`A clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
@@ -606,7 +630,7 @@ mLasso <- glmnet(x = trainX, y = trainY, alpha = 1, family  = "binomial")  # alp
 plot(mLasso, xvar = "lambda")
 #title("A. Coefficients in lasso regression", line = 2)
 
-# cross validation to find optimal lambda
+# cross-validation to find optimal lambda
 set.seed(44)
 K <- 9 # number of folds
 mCvLasso <- cv.glmnet(x = as.matrix(trainX), y = as.matrix(trainY), 
@@ -620,7 +644,7 @@ mtext("B. Choosing optimal lambda", adj = 0.7, outer = TRUE, cex = 1, line = 0)
 fig_nr <- fig_nr +1
 ```
 
-To make a decision about $\lambda$, cross-validation is used on the training data set. We use again 9-fold cross-validation as in PCR. We optimize the area under the receiver characteristic curve (AUC).
+To make a decision about $\lambda$, cross-validation is used on the training data set. We use again 9-fold cross-validation as in PCR. We optimize the area under the receiver operating characteristic curve (AUC).
 
 Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown with the corresponding names of the genes on figure `r fig_nr`s. These genes are hence the most important in predicting the kidney transplant rejection.
 
@@ -683,7 +707,7 @@ mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, fam
 #summary(coef(mRidgeOpt))
 ```
 
-The last model that we fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. The model is also fitted with a 10 folds cross validation. The optimal $\lambda$ is significantly higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
+The last model that we fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. The model is also fitted with a 10 folds cross-validation. The optimal $\lambda$ is significantly higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
 
 ## Model evaluation
 
