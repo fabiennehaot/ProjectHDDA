@@ -212,7 +212,7 @@ fig_nr = fig_nr + 1
 ```
 
 
-For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-3`). This subset of genes are the drivers of the majority of the variability in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
+For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-3`). This subset of genes are the drivers of the majority of the variability in X. However, because PCA does not separate the rejected and accepted cases well, these genes will not provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
 
@@ -509,7 +509,7 @@ full_model_cv <- suppressMessages(cv.glm(
 full_model_cv$delta[1] 
 ```
 
-First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divided into 9 approximately equal subsets.  We use 9 folds because the data set is relatively small, and this should therefore not take too much time.Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
+First we try to fit a model with all 175 PCs, using cross-validation. Via cross-validation will the training set be divided into 9 approximately equal subsets.  We use 9 folds because the data set is relatively small, and this should therefore not take too much time.Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
 
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
@@ -625,7 +625,7 @@ fig_nr <- fig_nr +1
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use again 9-fold cross-validation as in PCR. We optimize the area under the receiver characteristic curve (AUC).
 
-Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown on figure `r fig_nr` and next to this figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
+Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown with the corresponding names of the genes on figure `r fig_nr`s. These genes are hence the most important in predicting the kidney transplant rejection.
 
 ```{r Lasso_optimal, echo = FALSE, out.width = "50%", fig.align = "center"}
 # Lasso with optimal lambda
@@ -755,7 +755,7 @@ sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
 ```
 
-A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is selected in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is determined, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specificity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
+A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is selected in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is determined, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specificity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## References
