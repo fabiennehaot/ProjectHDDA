@@ -506,7 +506,7 @@ full_model_cv <- suppressMessages(cv.glm(
 full_model_cv$delta[1] 
 ```
 
-First we try to fit a model with all 175 PCs, using cross-validation. Via cross-validation will the training set be divided into 9 approximately equal subsets.  We use 9 folds because the data set is relatively small, and this should therefore not take too much time.Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
+First we try to fit a model with all 175 PCs, using cross-validation. Via cross-validation will the training set be divided into 9 approximately equal subsets. We use 9 folds because the data set is relatively small, and this should therefore not take too much time. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
 
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
