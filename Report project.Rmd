@@ -34,13 +34,10 @@ fig_nr <- 1
 
 # Executive Summary
 
-We investigated the claim that some genes are responsible for a patient’s likelihood of rejecting a kidney after transplantation. We started with an exploration of the data set by looking at the directions in the data space with the most variability, but this did not help us to make a distinction between the rejected and accepted cases. The variability in the data set does not appear to be related with kidney rejection. Next, we searched again for a linear combination of genes that succeeds in separating the two cases by using linear discriminant analysis. We noticed that we did not need all the genes. A subset of the total number of genes is enough to find a separation. This gives an indication that some genes are indeed associated with kidney rejection, while others are irrelevant. We continued our research by looking at which genes are differentially expressed between the two groups (by comparing means). We found 422 differentiated genes which are given in the appendix. From this result, we further assessed if kidney rejection can be predicted from the genes and this seemed to be the case. With only 12 genes, fairly-well predictions can be made (approximately 68% of the rejected kidneys could be predicted from these genes).
+We investigated the claim that some genes are responsible for a patient’s likelihood of rejecting a kidney after transplantation. We started with an exploration of the data set by looking at the directions in the data space with the most variability, but this did not help us to make a distinction between the rejected and accepted cases. The variability in the data set does not appear to be related with kidney rejection. Next, we searched again for a linear combination of genes that succeeds in separating the two cases by using linear discriminant analysis. We noticed that we did not need all the genes. A subset of the total number of genes is enough to find a separation. This gives an indication that some genes are indeed associated with kidney rejection, while others are irrelevant. We continued our research by looking at which genes are differentially expressed between the two groups (by comparing means). We found 422 differentiated genes which are given in the appendix. Because of this result, we further assessed if kidney rejection can be predicted from the genes and this seemed to be the case. With only 12 genes, fairly-well predictions can be made (approximately 68% of the rejected kidneys could be predicted from these genes).
 
 # Technical Report
 
-## Data
-
-Data description in [@einecke:2010]
 
 ```{r getdata, include = FALSE}
 data("Einecke2010Kidney")
@@ -50,7 +47,7 @@ Y <- factor(Einecke2010Kidney[, 1],
 ```
 
 ## Exploration of the Data
-The data exploration was started with examining the Einecke 2010 kidney data. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that three clouds are formed for the three values. This figure also illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. 
+The data exploration was started with examining the Einecke 2010 kidney data [@einecke:2010]. Of the 250 observations, there are 67 cases where the kidney transplant was rejected and 183 where it was accepted. Furthermore, no missing values were detected. Next, we take a look at possible outliers. Figure 1 gives the minimum, mean and maximum expression level for every gene. We clearly see that two clouds and the mean are formed for the three values. This figure also illustrates that the data seems to be close to centered, but not scaled, which indicates centering and scaling will be needed for further analysis. Finally, no outliers were found. 
 
 ```{r soundness_checks, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 # missing values
@@ -75,7 +72,7 @@ plot_first_view <- ggplot(data = tb_summary) +
   geom_point(mapping = aes(x = Nr, y = MaxPerVar), col = col_red, size = .3) +
   theme_bw() 
   
-title <- paste0("Figure ",fig_nr,": Data exploration")
+title <- paste0("Figure ", fig_nr, ": Data exploration")
 grid.arrange(plot_first_view,
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
@@ -149,17 +146,17 @@ Next, it is interesting to get more information on which genes are driving the P
 
 tb_loadings <- tibble(V1 = V[,1],V2= V[,2])
 hist_loading1 <- ggplot(tb_loadings)+
-  geom_histogram(mapping = aes(x=V1), fill = fill_blue, bins = 50) + 
+  geom_histogram(mapping = aes(x = V1), fill = fill_blue, bins = 50) + 
   geom_vline(mapping = aes(xintercept = quantile(V1, 0.025)), col = col_red) +
   geom_vline(mapping = aes(xintercept = quantile(V1, 0.975)), col = col_red) +
-  labs(title = 'A. Histogram PC 1 loadings', x = 'Loading', y = 'Frequency')+
+  labs(title = 'A. Histogram PC 1 loadings', x = 'Loading', y = 'Frequency') +
   theme_bw()
 
   
 hist_loading2 <- ggplot(tb_loadings) +
-  geom_histogram(mapping = aes(x=V2), fill = fill_blue, bins = 50) + 
-  geom_vline(mapping = aes(xintercept =quantile(V2, 0.025)), col = col_red) +
-  geom_vline(mapping = aes(xintercept =quantile(V2, 0.975)), col = col_red) +
+  geom_histogram(mapping = aes(x = V2), fill = fill_blue, bins = 50) + 
+  geom_vline(mapping = aes(xintercept = quantile(V2, 0.025)), col = col_red) +
+  geom_vline(mapping = aes(xintercept = quantile(V2, 0.975)), col = col_red) +
   labs(title = 'B. Histogram PC 2 loadings', x = 'Loading', y = 'Frequency') +
   theme_bw()
 
@@ -199,20 +196,20 @@ p_scatter_sparse <- ggplot(tb_sparse_pca) +
   theme_bw()  
 
 p_dens_sparse <- ggplot(tb_scores) +
-  geom_density(mapping=aes(x = SPC1 + SPC2, fill = Rejected),
+  geom_density(mapping = aes(x = SPC1 + SPC2, fill = Rejected),
                alpha = 0.5) +
   labs(title = "B. Density for sparse PCs") +
   scale_fill_manual(values = fill_response) +
   theme_bw()
 
-title <- paste0("Figure ",fig_nr,": Visualization of the first two sparse PCs")
+title <- paste0("Figure ", fig_nr, ": Visualization of the first two sparse PCs")
 grid.arrange(p_scatter_sparse, p_dens_sparse, ncol = 2, 
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 ```
 
 
-For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-3`). This subset of genes are the drivers of the majority of the variability in X. However, because PCA does not separate the rejected and accepted cases well, these genes won't provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
+For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-3`). This subset of genes are the drivers of the majority of the variability in X. However, because PCA does not separate the rejected and accepted cases well, these genes will not provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
 
@@ -241,10 +238,10 @@ lda_box <- ggplot() +
   labs(title = 'A. LDA with total set of genes', y = 'Rejection status') +
   theme_bw()
 
-slda_box <- ggplot()+
-  geom_boxplot(mapping=aes(y = SLDA, groups=Y, fill=Y))+
-  scale_fill_manual(values=fill_response)+
-  labs(title= paste0("B. LDA with subset of ",n_nonzero, " genes"), 
+slda_box <- ggplot() +
+  geom_boxplot(mapping = aes(y = SLDA, groups = Y, fill = Y)) +
+  scale_fill_manual(values = fill_response) +
+  labs(title = paste0("B. LDA with subset of ",n_nonzero, " genes"), 
        y = 'Rejection status') +
   theme_bw()
 
@@ -277,7 +274,7 @@ ttest_results <- apply(gene_data, 2, function(x){
 
 t_stats <- bind_rows(ttest_results) %>%
   mutate(gene = colnames(X_raw),
-         z_val= case_when(stat < 0 ~ qnorm(p_val/2), 
+         z_val = case_when(stat < 0 ~ qnorm(p_val/2), 
                             TRUE~ qnorm(1-p_val/2)))
 ```
 
@@ -378,7 +375,7 @@ pp_adj <- t_stats %>%
 # show histogram z-values +  monotonous adjustment for the p-values
 title <- paste0("Figure ", fig_nr,": Multiple t-tests: scaling and FDR-adjustment")
 grid.arrange(hist_fdr, hist_pscale, ncol = 2,
-             top= textGrob(title, gp = gpar(fontsize = size_txt)))
+             top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
 
 # number of detected genes
@@ -394,7 +391,7 @@ We  will use the local approach instead, where we assume that the observed histo
 #local fdr
 par(mfrow=c(1, 1), omi = c(0, 0, 2, 0), oma = c(0, 0, 2, 0))
 fdr_x <- locfdr(t_stats$z_val, plot = 4, main = "histogram")
-mtext(paste0("Figure ", fig_nr,": Local false discovery rate"),
+mtext(paste0("Figure ", fig_nr, ": Local false discovery rate"),
       outer = TRUE, adj = adj_txt, side = loc_txt, cex = cex_txt, padj = padj_txt)
 fig_nr <- fig_nr + 1
 
@@ -509,7 +506,7 @@ full_model_cv <- suppressMessages(cv.glm(
 full_model_cv$delta[1] 
 ```
 
-First we try to fit a model with all 175 PCs, using crossvalidation. Via crossvalidation will the training set be divided into 9 approximately equal subsets.  We use 9 folds because the data set is relatively small, and this should therefore not take too much time.Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
+First we try to fit a model with all 175 PCs, using cross-validation. Via cross-validation will the training set be divided into 9 approximately equal subsets. We use 9 folds because the data set is relatively small, and this should therefore not take too much time. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
 
 
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
@@ -562,7 +559,7 @@ plot_pcr_auc2 <- ggplot(cvpcr_run2) +
   labs(title = 'B. Cross validation PCR: steps of 1') +
   theme_bw() 
 
-title <- paste0("Figure ", fig_nr,": Optimal number of PCs")
+title <- paste0("Figure ", fig_nr, ": Optimal number of PCs")
 grid.arrange(plot_pcr_auc1, plot_pcr_auc2, ncol = 2, 
              top = textGrob(title, gp = gpar(fontsize = size_txt)))     
 fig_nr <- fig_nr+1
@@ -586,7 +583,7 @@ plot_dens_pcr <- ggplot(pcr_train) +
   scale_fill_manual(values = fill_response) +
   theme_bw() 
 
-title <- paste0("Figure ",fig_nr,": PCR on ", nr_pc_opt2, " PCs - density")
+title <- paste0("Figure ", fig_nr, ": PCR on ", nr_pc_opt2, " PCs - density")
 grid.arrange(plot_dens_pcr, 
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr+1
@@ -625,7 +622,7 @@ fig_nr <- fig_nr +1
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use again 9-fold cross-validation as in PCR. We optimize the area under the receiver characteristic curve (AUC).
 
-Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown on figure `r fig_nr` and next to this figure, we show the corresponding names of the genes. These genes are hence the most important in predicting the kidney transplant rejection.
+Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown with the corresponding names of the genes on figure `r fig_nr`s. These genes are hence the most important in predicting the kidney transplant rejection.
 
 ```{r Lasso_optimal, echo = FALSE, out.width = "50%", fig.align = "center"}
 # Lasso with optimal lambda
@@ -648,8 +645,8 @@ tb_genes_mLassoOpt <- as_tibble(summ_mLassoOpt) %>%
          beta_hat = x)
 
 lasso_genes <- ggplot(tb_genes_mLassoOpt) +
-  geom_text(mapping=aes(x=gene,y=beta_hat,label=namegene))+
-  geom_hline(yintercept = 0, color = col_red)+
+  geom_text(mapping = aes(x = gene, y = beta_hat, label = namegene)) +
+  geom_hline(yintercept = 0, color = col_red) +
   theme_bw()
 
 title <- paste0("Figure ", fig_nr, ": Estimated coefficients Lasso")
@@ -755,7 +752,7 @@ sens <- sum(newY == 1 & testY==1)/ sum(testY == 1)
 spec <- sum(newY == 0 & testY==0)/ sum(testY == 0)
 ```
 
-A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is selected in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is determined, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specificity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
+A high AUC value is also found on the test set (`r round(calc_auc(roc)[1,3],2)`). The next step is to determine a good threshold $c$ as a prediction cut-off. This cutoff is selected in order to minimize the misclassification error. For this, we will use our training data again. Once the cutoff is determined, we assess the performance of our final model on a test set that contains observations we did not use to fit the model. The goal is to understand how well it predicts the right group for new observations. For this, we are interested in the sensitivity ($\frac{TP}{TP+FN}$) and specificity ($\frac{TN}{TN+FP}$) of the final model. With the optimized cutoff `r cutoff`, we obtain sensitivity `r round(sens,2)` and specificity `r round(spec,2)`. Both measures are satisfactory. The specificity is higher than the sensitivity which means the model does a better job in predicting the accepted cases than the rejected ones.
 
 
 ## References
