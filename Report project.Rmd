@@ -122,7 +122,7 @@ p_scatter <- ggplot(tb_scores) +
   theme_bw()   
 
 p_dens <- ggplot(tb_scores) +
-  geom_density(mapping=aes(x = PCA1 + PCA2, fill = Rejected),
+  geom_density(mapping = aes(x = PCA1 + PCA2, fill = Rejected),
                alpha = 0.5) +
   labs(title = "B. Density for 2 PCs") +
   scale_fill_manual(values = fill_response) +
@@ -132,10 +132,7 @@ title <- paste0("Figure ", fig_nr, ": Principal component analysis")
 grid.arrange(p_scatter, p_dens, ncol = 2,
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
-
 ```
-
- 
 
 To get more insight in the research question, we examine whether kidney rejection is associated with the PCs. For this, we look at Figure `r fig_nr-1`A. 
 We notice that the PCs do not clearly separate the accepted and rejected cases. However, we do see that the rejected cases are more present in the bottom left corner and the accepted cases in the top right corner. Figure `r fig_nr-1`B confirms this observation by illustrating that the density curve of the rejected cases (blue) is situated where the values for PC1 and PC2 are low, which corresponds to the bottom left corner of Figure `r fig_nr-1`A. On the other hand, the density curve of the accepted cases (red) is situated where PC1 and PC2 are higher, which corresponds to the top right corner.
@@ -151,7 +148,6 @@ hist_loading1 <- ggplot(tb_loadings)+
   geom_vline(mapping = aes(xintercept = quantile(V1, 0.975)), col = col_red) +
   labs(title = 'A. Histogram PC 1 loadings', x = 'Loading', y = 'Frequency') +
   theme_bw()
-
   
 hist_loading2 <- ggplot(tb_loadings) +
   geom_histogram(mapping = aes(x = V2), fill = fill_blue, bins = 50) + 
@@ -164,13 +160,11 @@ title <- paste0("Figure ", fig_nr, ": Histogram for PC-loadings")
 grid.arrange(hist_loading1, hist_loading2, ncol = 2,
              top= textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr <- fig_nr + 1
-
 ```
 
 The histograms (Figures `r fig_nr-1`A and `r fig_nr-1`B) confirm this finding, which gives us a reason to believe that sparse PCA is worthwhile. 
 
 ```{r sparse_PCA, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
-
 set.seed(45)
 fit_loadings1 <- cv.glmnet(X, Z[, 1],
                            alpha = 0.5, nfolds = 5)
@@ -207,8 +201,6 @@ grid.arrange(p_scatter_sparse, p_dens_sparse, ncol = 2,
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
 ```
-
-
 For both PC1 and PC2 around 200 genes are important (Figure `r fig_nr-1`), which can provide more or less the same result as the PCA with all the genes (Figure `r fig_nr-3`). This subset of genes are the drivers of the majority of the variability in X. However, because PCA does not separate the rejected and accepted cases well, these genes will not provide much information on whether or not the transplantation will be successful or not. Therefore, it would not be worthwhile to further examine these genes.
 
 Finally, because PCA only takes the genes into account in the decomposition and not the class membership, we executed LDA. Furthermore, because the genes are collinear, a sparse LDA is performed as well. The results of these are illustrated in Figures `r fig_nr`A and `r fig_nr`B.
@@ -250,7 +242,6 @@ title <- paste0("Figure ", fig_nr,": Linear discriminant analysis")
 grid.arrange(lda_box, slda_box, ncol = 2,              
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
-
 ```
 
 Both the regular LDA (Figure `r fig_nr-1`A) and the sparse LDA (Figure `r fig_nr-1`B) separate the accepted cases (red) and the rejected cases (blue) fairly well. However, the sparse LDA only needs 52 genes to do this. With the sparse LDA we see that the accepted cases are situated just below 0 and the rejected cases around 1.
@@ -317,7 +308,6 @@ title <- paste0("Figure ", fig_nr,": Multiple t-tests unadjusted")
 grid.arrange(hist_zval, hist_pval, ncol = 2,          
              top = textGrob(title, gp = gpar(fontsize = size_txt)))
 fig_nr = fig_nr + 1
-
 
 # number of differentiated genes
 table_p_nonadj <- table(t_stats$p_val < nonadj_level)
@@ -386,7 +376,6 @@ nr_detected_fdr <- as.numeric(table_p_adj['TRUE'])
 
 Standardizing the z-values does not help (Figure `r fig_nr-1`A), the theoretical distribution is now too wide to apply the @BH:1995 procedure.  
 We  will use the local approach instead, where we assume that the observed histogram represents a mixture of different Gaussian distributions (@Efron:2007). The parameters of the Gaussian distributions will be estimated with maximum likelihood.  
-
 
 ```{r local_fdr, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 #local fdr
@@ -509,7 +498,6 @@ full_model_cv$delta[1]
 
 First we try to fit a model with all 175 PCs, using cross-validation. Via cross-validation will the training set be divided into 9 approximately equal subsets. We use 9 folds because the data set is relatively small, and this should therefore not take too much time. Here we get an area under the curve (AUC) of `r round(full_model_cv$delta[1],2)`. However, because we use all PCs, we got a warning for overfitting the data.
 
-
 ```{r eachPC, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 auc_cv_glm <- function(trials, data, folds){
   full_model <- suppressWarnings(glm(Y ~ ., data = data, family = "binomial"))
@@ -621,7 +609,6 @@ Since we want to make predictions on a subset of the genes, we constructed the s
 
 We are now going to use two penalised (logistic) regression models. First, a Lasso regression that uses the $L_1$-norm is performed. We will again only use the training set to fit the model. Figure `r fig_nr`A clearly shows that when the penalty parameter $\lambda$ increases the estimates are shrunken towards zero. When it hits zero, it remains zero. Hence, choosing $\lambda$ is related to feature selection.
 
-
 ```{r Lasso, echo = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
 par(mfrow=c(1,2), oma = c(0, 0, 5, 0))
 
@@ -647,7 +634,7 @@ fig_nr <- fig_nr +1
 
 To make a decision about $\lambda$, cross-validation is used on the training data set. We use again 9-fold cross-validation as in PCR. We optimize the area under the receiver operating characteristic curve (AUC).
 
-Two vertical lines are added on figure `r fig_nr`B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown with the corresponding names of the genes on figure `r fig_nr`s. These genes are hence the most important in predicting the kidney transplant rejection.
+Two vertical lines are added on figure 13B. The first one gives the $\log(\lambda)$ for which we find the highest AUC. We will go on with this value, because with the other choice for $\lambda$, almost no genes are used anymore. We are left with 12 predictors from the original 10,000 genes (i.e. a sparse solution). The values of the corresponding $\beta$ coefficients are shown with the corresponding names of the genes on figure `r fig_nr`. These genes are hence the most important in predicting the kidney transplant rejection.
 
 ```{r Lasso_optimal, echo = FALSE, out.width = "50%", fig.align = "center"}
 # Lasso with optimal lambda
@@ -684,7 +671,6 @@ We have now our optimal Lasso model with $\lambda =$ `r round(lambda_cv,3)` and 
 
 ### Ridge regression
 
-
 ```{r ridge, echo = FALSE, out.width = "50%",fig.align = "center"}
 par(oma = c(0, 0, 3, 0))
 
@@ -708,7 +694,7 @@ mRidgeOpt <- glmnet(x = as.matrix(trainX), y = as.matrix(trainY), alpha = 0, fam
 #summary(coef(mRidgeOpt))
 ```
 
-The last model that we fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. The model is also fitted with a 10 folds cross-validation. The optimal $\lambda$ is significantly higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
+The last model that we fit on the training data is the ridge regression model that uses the $L_2$-norm. The major difference between lasso and ridge regression is that ridge regression does not perform feature selection. The model is also fitted with a 9 fold cross-validation. The optimal $\lambda$ is significantly higher compared to the Lasso regression model (`r round(rlambda_cv,3)`). The AUC value on the training data set equals `r round(auc_ridge, 2)` which is lower than for the lasso regression model.
 
 ## Model evaluation
 
