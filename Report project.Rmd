@@ -25,7 +25,7 @@ library(grid)
 # graphical parameters
 fill_blue = "lightblue"; fill_red = "firebrick"
 col_blue = "blue"; col_red = "red"; col_green = "green"
-col_response <- c("accept" = col_red, "reject" = col_blue)
+col_response <- c("accept" = fill_red, "reject" = fill_blue)
 fill_response <- c("accept" = fill_red, "reject" = fill_blue)
 cex_txt <- 1.5; loc_txt <- 3; adj_txt <- 0.5; padj_txt <- 0
 size_txt <- 19
@@ -84,7 +84,7 @@ X <- scale(X_raw)
 
 A first look at the data does not provide a clear understanding on how kidney rejection is associated with the gene expression levels. Considering the data is in a high dimensional setting, we opted for PCA to obtain a better understanding.
 
-```{r PCA_var_explained, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center"}
+```{r PCA_var_explained, echo = FALSE, warning = FALSE, fig.height = 5, fig.width = 10, fig.align = "center", out.width = "50%"}
 
 # PCA
 svd_x <- svd(X)
