@@ -577,21 +577,22 @@ pcr_model1 <- glm(trainY ~ Zk, family = "binomial")
 
 pcr_train = tibble(pcr_score = pcr_model1$fitted.values, 
                    rejection = trainY)
+
+auc_pcr <- auc(roc(pcr_train, response = 'rejection', predictor = 'pcr_score'))
                    
-plot_dens_pcr <- ggplot(pcr_train) +
+p_dens_pcr <- ggplot(pcr_train) +
   geom_density(mapping = aes(x = pcr_score, fill=rejection), 
                alpha = 0.5) +
-  scale_fill_manual(values = fill_response) +
-  theme_bw() 
+  labs(title = "Figure 11: Density for 2 PCs: densities") +
+  scale_fill_manual(values = c('red', 'blue')) +
+  theme_bw() +
+  theme(plot.title = element_text(size = 19))
 
-title <- paste0("Figure ", fig_nr, ": PCR on ", nr_pc_opt2, " PCs - density")
-grid.arrange(plot_dens_pcr, 
-             top = textGrob(title, gp = gpar(fontsize = size_txt)))
-fig_nr <- fig_nr+1
+p_dens_pcr
 ```
 
-In the last step, a PCR model with `r nr_pc_opt2` PCs is fitted. The Akaike's Information Criterion (AIC) for this model is 158.43.
-When we plot the two densities of the accepted and rejected kidneys with this model (Figure `r fig_nr`), we clearly see there is no overlap. This means, the model is not acceptable enough. 
+In the last step, a PCR model with `r nr_pc_opt2` PCs is fitted. The AUC for this model is `r auc_pcr` .
+When we plot the two densities of the accepted and rejected kidneys with this model (Figure 11), we see an overlap between the 2 rejection status. This means, with this model, the 2 rejection status are not well separated.
 
 ```{r sparse_pcr}
 set.seed(45)
